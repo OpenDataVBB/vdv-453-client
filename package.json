@@ -1,0 +1,39 @@
+{
+	"private": true,
+	"name": "vdv-453-client",
+	"description": "Subscribe to data from a VDV 453 API.",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "index.js",
+	"files": [
+		"index.js",
+		"lib",
+		"example.js"
+	],
+	"keywords": [
+		"vdv 453",
+		"realtime",
+		"public transport",
+		"transit"
+	],
+	"author": "Jannis R <mail@jannisr.de>",
+	"homepage": "https://github.com/derhuerst/vdv-453-client",
+	"repository": "derhuerst/vdv-453-client",
+	"bugs": "https://github.com/derhuerst/vdv-453-client/issues",
+	"license": "ISC",
+	"engines": {
+		"node": ">=16"
+	},
+	"dependencies": {
+	},
+	"devDependencies": {
+		"eslint": "^8.0.0",
+		"tap-min": "^2.0.0",
+		"tape": "^5.0.1"
+	},
+	"scripts": {
+		"test": "env NODE_ENV=dev node test.js | tap-min",
+		"lint": "eslint .",
+		"prepublishOnly": "npm run lint && npm test"
+	}
+}
