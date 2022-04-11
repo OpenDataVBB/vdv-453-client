@@ -25,6 +25,11 @@
 		"node": ">=16"
 	},
 	"dependencies": {
+		"content-type": "^1.0.4",
+		"debug": "^4.3.4",
+		"pino": "^7.10.0",
+		"xast-util-to-xml": "^3.0.0",
+		"xml-stream-saxes": "^0.4.9"
 	},
 	"devDependencies": {
 		"eslint": "^8.0.0",
