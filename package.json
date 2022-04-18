@@ -37,6 +37,7 @@
 	},
 	"devDependencies": {
 		"eslint": "^8.0.0",
+		"pino-pretty": "^7.6.1",
 		"tap-min": "^2.0.0",
 		"tape": "^5.0.1"
 	},
