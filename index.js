@@ -9,7 +9,7 @@ import {CLIENT_CALLS, SERVER_CALLS, ALL_CALLS} from './lib/calls.js'
 import {createSendRequest, BESTAETIGUNG,} from './lib/send-request.js'
 import {createServer} from './lib/server.js'
 import {SERVICES} from './lib/services.js'
-import {formatUnixTimestampAsIso8601} from './lib/format-iso-8601-timestamp.js'
+import {getZst} from './lib/zst.js'
 
 const {
 	REF_DFI,
