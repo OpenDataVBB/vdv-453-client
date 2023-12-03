@@ -11,6 +11,13 @@
 		"node_modules"
 	],
 	"rules": {
-		"no-unused-vars": "warn"
+		"no-unused-vars": [
+			"warn",
+			{
+				"vars": "all",
+				"args": "none",
+				"ignoreRestSiblings": false
+			}
+		]
 	}
 }
