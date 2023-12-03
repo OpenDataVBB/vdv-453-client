@@ -1,7 +1,7 @@
 'use strict'
 
 import {ok} from 'node:assert'
-import {createServer as createHttpServer} from 'http'
+import {createServer as createHttpServer} from 'node:http'
 import {x} from 'xastscript'
 import {u} from 'unist-builder'
 import {CLIENT_CALLS, SERVER_CALLS, ALL_CALLS} from './lib/calls.js'

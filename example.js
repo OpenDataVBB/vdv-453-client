@@ -1,6 +1,7 @@
 'use strict'
 
 import pino from 'pino'
+import {promisify} from 'node:util'
 import {createClient} from './index.js'
 
 const logger = pino({
@@ -15,13 +16,5 @@ const {
 	logger,
 })
 
-httpServer.listen(3000, (err) => {
-	if (err) {
-		logger.error({
-			error: err,
-		}, err.message)
-		process.exit(1)
-	}
-
-	logger.info('listening on port 3000')
-})
+await promisify(httpServer.listen.bind(httpServer))(3000)
+logger.info('listening on port 3000')
