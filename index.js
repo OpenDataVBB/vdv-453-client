@@ -1,5 +1,6 @@
 'use strict'
 
+import pino from 'pino'
 import {ok} from 'node:assert'
 import {createServer as createHttpServer} from 'node:http'
 import {x} from 'xastscript'
@@ -22,6 +23,20 @@ const {
 // see also https://web.archive.org/web/20220411144928/https://www.vdv.de/i-d-s-downloads.aspx
 
 const createClient = (cfg, opt = {}) => {
+	const {
+		logger,
+	} = {
+		logger: pino({
+			level: process.env.LOG_LEVEL || 'info',
+		}),
+		...opt,
+	}
+	ok('object' === typeof logger && logger, 'opt.logger must be an object')
+	cfg = {
+		...cfg,
+		logger,
+	}
+
 	const sendRequest = createSendRequest(cfg, opt)
 	const {router, errorHandler} = createServer(cfg, opt)
 
@@ -44,6 +59,7 @@ const createClient = (cfg, opt = {}) => {
 		router(req, res, final)
 	})
 	return {
+		logger,
 		sendRequest,
 		httpServer,
 	}
