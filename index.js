@@ -1,6 +1,6 @@
 'use strict'
 
-// import {strictEqual, ok} from 'assert'
+import {ok} from 'node:assert'
 import {createServer as createHttpServer} from 'http'
 import {x} from 'xastscript'
 import {u} from 'unist-builder'
@@ -38,7 +38,8 @@ const createClient = (cfg, opt = {}) => {
 
 	const httpServer = createHttpServer((req, res) => {
 		const final = () => {
-			// todo
+			// The `createServer()` should always have responded already, on both failures and successful handling.
+			ok(res.headersSent, `router did not handle the request (${req.method} ${req.url})`)
 		}
 		router(req, res, final)
 	})
