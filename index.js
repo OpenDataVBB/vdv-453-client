@@ -1,7 +1,7 @@
 'use strict'
 
 import pino from 'pino'
-import {ok} from 'node:assert'
+import {strictEqual, ok} from 'node:assert'
 import {createServer as createHttpServer} from 'node:http'
 import {x} from 'xastscript'
 import {u} from 'unist-builder'
@@ -12,8 +12,18 @@ import {SERVICES} from './lib/services.js'
 import {getZst} from './lib/zst.js'
 
 const {
-	REF_DFI,
+	DFI,
+	// REF_DFI,
+	// ANS,
+	// REF_ANS,
+	// VIS,
+	// AND,
+	// AUS,
+	// REF_AUS,
 } = SERVICES
+const {
+	STATUS,
+} = CLIENT_CALLS
 const {
 	CLIENT_STATUS,
 } = SERVER_CALLS
@@ -23,6 +33,12 @@ const {
 // see also https://web.archive.org/web/20220411144928/https://www.vdv.de/i-d-s-downloads.aspx
 
 const createClient = (cfg, opt = {}) => {
+	const {
+		leitstelle,
+	} = cfg
+	strictEqual(typeof leitstelle, 'string', 'cfg.leitstelle must be a string')
+	ok(leitstelle, 'cfg.leitstelle must not be empty')
+
 	const {
 		logger,
 	} = {
@@ -40,14 +56,89 @@ const createClient = (cfg, opt = {}) => {
 	const sendRequest = createSendRequest(cfg, opt)
 	const {router, errorHandler} = createServer(cfg, opt)
 
-	router.post(`/:leitstelle/${REF_DFI}/${CLIENT_STATUS}`, (req, res, next) => {
-		req.parseWholeRoot('ClientStatusAnfrage')
-		.then((clientStatusAnfrage) => {
-			console.error(clientStatusAnfrage)
-			res.end('post!!')
+	// ----------------------------------
+
+	const startDienstZst = getZst()
+
+	// todo: move to lib/server.js?
+	const _onRequest = (service, call, handleRequest) => {
+		const path = [leitstelle, service, call].map(part => encodeURIComponent(part))
+		router.post('/' + path, async (req, res, next) => {
+			try {
+				await handleRequest(req, res, next)
+			} catch (err) {
+				next(err)
+			}
 		})
-		.catch(next)
-	})
+	}
+
+	const _handleClientStatusAnfrage = (service) => {
+		_onRequest(service, CLIENT_STATUS, async (req, res) => {
+			const logCtx = {
+				service,
+			}
+
+			const clientStatusAnfrage = await req.parseWholeRoot('ClientStatusAnfrage')
+			logCtx.clientStatusAnfrage = clientStatusAnfrage
+			logger.debug(logCtx, 'received ClientStatusAnfrage')
+
+			// todo: expose value of `StartDienstZst` child?
+			// todo: expose value of `DatenVersionID` child?
+
+			res.respondWithResponse({
+				ok: true, // todo: are we ever not okay?
+				status: true, // send Status element
+				children: [
+					x('StartDienstZst', {}, startDienstZst),
+					// todo: provide AktiveAbos if `clientStatusAnfrage.$.MitAbos` has value `true`
+					// > 5.1.8.3 ClientStatusAnfrage
+					// > Beispiel 3: Antwort des Clients: Dienst verfügbar, Client initialisiert gerade und will keine Auskunft zu den aktiven Abonnements geben:
+				],
+			})
+		})
+	}
+
+	const _sendStatusAnfrage = async (service) => {
+		const {
+			parseResponse,
+			assertStatusAntwortOk,
+		} = await sendRequest(
+			service,
+			STATUS,
+			// todo: move "StatusAnfrage" into constant?
+			'StatusAnfrage',
+			[],
+		)
+
+		const tags = parseResponse([
+			// todo: move "StatusAntwort" into constant?
+			{tag: 'StatusAntwort', preserve: true},
+		])
+		for await (const [tag, el] of tags) {
+			if (tag === 'StatusAntwort') {
+				assertStatusAntwortOk(el)
+
+				logger.debug({
+					service,
+					statusAntwort: el,
+				}, 'received StatusAntwort')
+				return el
+			}
+		}
+	}
+
+	// ----------------------------------
+
+	_handleClientStatusAnfrage(DFI)
+	// _handleClientStatusAnfrage(REF_DFI)
+	// _handleClientStatusAnfrage(ANS)
+	// _handleClientStatusAnfrage(REF_ANS)
+	// _handleClientStatusAnfrage(VIS)
+	// _handleClientStatusAnfrage(AND)
+	// _handleClientStatusAnfrage(AUS)
+	// _handleClientStatusAnfrage(REF_AUS)
+
+	// ----------------------------------
 
 	router.use(errorHandler)
 
