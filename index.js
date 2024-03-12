@@ -28,9 +28,10 @@ const {
 	CLIENT_STATUS,
 } = SERVER_CALLS
 
-// This implementation follows the VDV 453 spec, as documented in the "VDV-453 Ist-Daten-Schnittstelle – Version 3.0" document.
-// https://web.archive.org/web/20220411145248/https://www.vdv.de/service/downloads_onp.aspx?id=4337&forced=False
-// see also https://web.archive.org/web/20220411144928/https://www.vdv.de/i-d-s-downloads.aspx
+// This implementation follows the VDV 453 spec, as documented in the "VDV-453 Ist-Daten-Schnittstelle – Version 2.6.1" document. It also supports the VDV 454 extension, as documented in the "VDV-454 Ist-Daten-Schnittstelle – Fahrplanauskunft – Version 2.2.1".
+// https://web.archive.org/web/20231208122259/https://www.vdv.de/vdv-schrift-453-v2.6.1-de.pdfx?forced=true
+// https://web.archive.org/web/20231208122259/https://www.vdv.de/454v2.2.1-sd.pdfx?forced=true
+// see also https://web.archive.org/web/20231208122259/https://www.vdv.de/i-d-s-downloads.aspx
 
 const createClient = (cfg, opt = {}) => {
 	const {
