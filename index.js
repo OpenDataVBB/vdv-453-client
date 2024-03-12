@@ -18,7 +18,7 @@ const {
 	// REF_ANS,
 	// VIS,
 	// AND,
-	// AUS,
+	AUS,
 	// REF_AUS,
 } = SERVICES
 const {
@@ -44,6 +44,8 @@ const {
 const ABO_ANFRAGE_ROOT_SUB_TAGS_BY_SERVICE = new Map([
 	[DFI, 'AboAZB'],
 	// [REF_DFI, 'AboAZBRef'],
+	[AUS, 'AboAUS'],
+	// [REF_AUS, 'AboAUSRef'],
 ])
 
 // > 5.1.4.2 Daten übertragen (DatenAbrufenAntwort)
@@ -55,9 +57,14 @@ const ABO_ANFRAGE_ROOT_SUB_TAGS_BY_SERVICE = new Map([
 // > VISNachricht: […] Enthält Informationen zu Fahrten, die in einer Fremdleitstelle visualisiert werden sollen.
 // > ANDNachricht: […] Enthält Informationen zu aktuellen Betriebsereignissen, die in einer Fremdleitstelle einem Disponenten mitgeteilt werden sollen.
 // > […]
+// VDV 454 spec:
+// > 5.1.2 Daten übermitteln (AUSNachricht)
+// > Alle Datenübermittlungen zu einem Abonnement (Planungdaten, Istdaten und Anschlussinformationen) werden in dem Element AUSNachricht übermittelt.
 const DATEN_ABRUFEN_ANTWORT_ROOT_SUB_TAGS_BY_SERVICE = new Map([
 	[DFI, 'AZBNachricht'],
 	// [REF_DFI, 'AZBNachricht'],
+	[AUS, 'AUSNachricht'],
+	// [REF_AUS, 'AUSNachricht'],
 ])
 
 const SECOND = 1000
@@ -383,7 +390,7 @@ const createClient = (cfg, opt = {}) => {
 	// _handleClientStatusAnfrage(REF_ANS)
 	// _handleClientStatusAnfrage(VIS)
 	// _handleClientStatusAnfrage(AND)
-	// _handleClientStatusAnfrage(AUS)
+	_handleClientStatusAnfrage(AUS)
 	// _handleClientStatusAnfrage(REF_AUS)
 
 	// ----------------------------------
@@ -450,6 +457,77 @@ const createClient = (cfg, opt = {}) => {
 
 	// ----------------------------------
 
+	const ausSubscribe = async (azbId, opt = {}) => {
+		const {
+			expiresAt,
+			// linienId,
+			// richtungsId,
+			vorschauzeit,
+			hysterese,
+		} = {
+			expiresAt: Date.now() + HOUR,
+			// linienId: null,
+			// richtungsId: null,
+			vorschauzeit: 10, // minutes
+			// The VBB VDV-453 server reports:
+			// > Die Hysterese des Lieferanten "VBB DDS" ist 60 Sekunden […].
+			hysterese: 60, // seconds
+			...opt,
+		}
+		// todo: validate arguments
+
+		const aboSubChildren = [
+			// todo: LinienFilter doesn't seem to work yet
+			// x('LinienFilter', {}, [
+			// 	linienId !== null ? x('LinienID', {}, linienId) : null,
+			// 	richtungsId !== null ? x('RichtungsID', {}, richtungsId) : null,
+			// ]),
+			x('Hysterese', {}, hysterese),
+			// todo: BetreiberFilter
+			// todo: ProduktFilter
+			// todo: VekehrsmittelTextFilter
+			// todo: HaltFilter
+			// todo: UmlaufFilter
+			// todo: MitGesAnschluss
+			// todo: MitRealZeiten
+			// todo: MitFormation
+			// todo: NurAktualisierung
+			// Note: <Vorschauzeit> has to be the last child element!
+			x('Vorschauzeit', {}, vorschauzeit),
+		]
+		return await _subscribe(AUS, aboSubChildren, expiresAt)
+	}
+	const ausUnsubscribe = async (...aboIds) => {
+		return await _unsubscribe(AUS, aboIds)
+	}
+	const ausUnsubscribeAll = async () => {
+		return await _unsubscribeAll(AUS)
+	}
+
+	const ausData = new TransformStream()
+	const _ausDataWriter = ausData.writable.getWriter()
+	_handleDatenBereitAnfrage(AUS, async () => {
+		// _handleDatenBereitAnfrage does not handle rejections, so we do it here
+		try {
+			const data = _sendDatenAbrufenAnfrage(AUS, datensatzAlle)
+			for await (const ausNachricht of data) {
+				for (const child of ausNachricht.$children) {
+					await _ausDataWriter.write(child)
+				}
+			}
+			// todo: don't close, to allow fetching again later
+			await _ausDataWriter.close()
+		} catch (err) {
+			// todo: emit error on `ausData` somehow?
+			logger.error({
+				service: AUS,
+				err,
+			}, `failed to fetch & process data: ${err.message}`)
+		}
+	})
+
+	// ----------------------------------
+
 	router.use(errorHandler)
 
 	const httpServer = createHttpServer((req, res) => {
@@ -467,6 +545,10 @@ const createClient = (cfg, opt = {}) => {
 		dfiUnsubscribe,
 		dfiUnsubscribeAll,
 		dfiData,
+		ausSubscribe,
+		ausUnsubscribe,
+		ausUnsubscribeAll,
+		ausData,
 	}
 }
 
