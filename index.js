@@ -16,7 +16,9 @@ const {
 	// REF_DFI,
 	// ANS,
 	// REF_ANS,
+	// > Dieser Dienst wird derzeit nicht von der VBB Datendrehscheibe unterstützt.
 	// VIS,
+	// > Dieser Dienst wird derzeit nicht von der VBB Datendrehscheibe unterstützt.
 	// AND,
 	AUS,
 	// REF_AUS,
@@ -63,6 +65,7 @@ const ABO_ANFRAGE_ROOT_SUB_TAGS_BY_SERVICE = new Map([
 const DATEN_ABRUFEN_ANTWORT_ROOT_SUB_TAGS_BY_SERVICE = new Map([
 	[DFI, 'AZBNachricht'],
 	// [REF_DFI, 'AZBNachricht'],
+	// todo: rather pick AUSNachricht children (FahrtVerband, Linienfahrplan, SollUmlauf, IstFahrt, IstUmlauf, GesAnschluss)? – AUSNachricht has ~500kb of children, so this would lead to smaller XML trees being read into memory
 	[AUS, 'AUSNachricht'],
 	// [REF_AUS, 'AUSNachricht'],
 ])
@@ -111,6 +114,8 @@ const createClient = (cfg, opt = {}) => {
 		}),
 	}, opt)
 	const {router, errorHandler} = createServer(cfg, opt)
+
+	// todo: serve basic information about the service on /
 
 	// ----------------------------------
 
