@@ -317,8 +317,16 @@ const createClient = (cfg, opt = {}) => {
 	// > 5.1.4.1 Datenübertragung anfordern (DatenAbrufenAnfrage)
 	// > Wurde bereits eine DatenAbrufenAnfrage vom Client an den Server versandt, so ist für diese vom Client eine DatenAbrufenAntwort abzuwarten (Antwort, oder Timeout), bevor erneut eine DatenAbrufenAnfrage versandt wird. Es wird daher empfohlen keine weitere DatenAbrufenAnfrage zu stellen, solange noch eine DatenAbrufenAnfrage aktiv ist.
 	const WEITERE_DATEN = 'WeitereDaten'
-	const _sendDatenAbrufenAnfrage = async function* (service, datensatzAlle = false) {
-		// todo: validate arguments
+	const DATEN_ABRUFEN_MAX_RECURSIONS = 100
+	const _sendDatenAbrufenAnfrage = async function* (service, datensatzAlle = false, recursionLevel = 0) {
+		if (recursionLevel >= DATEN_ABRUFEN_MAX_RECURSIONS) {
+			const err = new Error(`${service}: too many recursions while fetching data`)
+			err.service = service
+			err.datensatzAlle = datensatzAlle
+			err.recursions = recursionLevel
+			throw err
+		}
+
 		ok(
 			DATEN_ABRUFEN_ANTWORT_ROOT_SUB_TAGS_BY_SERVICE.has(service),
 			`invalid/unknown tag of DatenAbrufenAntwort sub element(s) for service "${service}"`
@@ -328,6 +336,7 @@ const createClient = (cfg, opt = {}) => {
 		const logCtx = {
 			service,
 			dataSubTag,
+			recursionLevel,
 		}
 		logger.debug(logCtx, 'requesting data')
 
@@ -355,9 +364,10 @@ const createClient = (cfg, opt = {}) => {
 
 		const tags = parseResponse([
 			{tag: BESTAETIGUNG, preserve: true},
-			// todo? `{tag: WEITERE_DATEN, preserve: true}`
+			{tag: WEITERE_DATEN, preserve: true},
 			{tag: dataSubTag, preserve: true},
 		])
+		let weitereDaten = false
 		for await (const [tag, el] of tags) {
 			if (tag === BESTAETIGUNG) {
 				assertBestaetigungOk(el)
@@ -369,16 +379,18 @@ const createClient = (cfg, opt = {}) => {
 				// > 5.1.4.2 Daten übertragen (DatenAbrufenAntwort)
 				// > Der Server antwortet mit den aktualisierten Datensätzen innerhalb einer Nachricht vom Typ `DatenAbrufenAntwort`. Der Inhalt ist dienstspezifisch.
 				// > Mittels des Elementes `WeitereDaten` wird angezeigt, ob der Inhalt von `DatenAbrufenAntwort` alle aktualisierten Daten enthält, oder ob aus technischen Gründen die Übermittlung in mehrere Pakete aufgeteilt wurde. Diese Daten können durch den Datenkonsumenten durch weitere `DatenAbrufenAnfrage`n beim Produzenten abholt werden. Beim letzten Datenpaket ist das Element `WeitereDaten` auf `false` gesetzt. Abweichend vom Standardverhalten optionaler Felder hat `WeitereDaten` den Default-Wert `false`. Ein fehlendes Element `WeitereDaten` zeigt also an, dass die Datenübertragung vollständig mit diesem Paket abgeschlossen wird.
-				// todo: request again
-				const err = new Error('unable to handle DatenAbrufenAntwort with WeitereDaten=true')
-				Object.assign(err, logCtx)
-				throw err
+				weitereDaten = true
 			}
 			if (tag === dataSubTag) {
 				yield el
 				continue
 			}
 			// todo: otherwise warn-log unexpected tag?
+		}
+
+		if (weitereDaten) {
+			logger.debug(logCtx, `received DatenAbrufenAntwort with WeitereDaten=true, recursing (${recursionLevel + 1})`)
+			yield* _sendDatenAbrufenAnfrage(service, datensatzAlle, recursionLevel + 1)
 		}
 	}
 
