@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vdv:DatenAbrufenAntwort xmlns:vdv="vdv453ger">
+	<Bestaetigung Zst="2024-04-11T13:18:08.985Z" Ergebnis="ok" Fehlernummer="0"/>
+	<WeitereDaten>true</WeitereDaten>
+	<AUSNachricht AboID="18507">
+		<IstFahrt>
+			<LinienID>581</LinienID>
+			<RichtungsID>2</RichtungsID>
+			<FahrtRef>
+				<FahrtID>
+					<FahrtBezeichner>0_581_01410#VMEE</FahrtBezeichner>
+					<Betriebstag>2024-04-11</Betriebstag>
+				</FahrtID>
+				<FahrtStartEnde>
+					<StartHaltID>ODEG_900435229</StartHaltID>
+					<Startzeit>2024-04-11T13:24:00Z</Startzeit>
+					<EndHaltID>ODEG_900415502</EndHaltID>
+					<Endzeit>2024-04-11T13:57:00Z</Endzeit>
+				</FahrtStartEnde>
+			</FahrtRef>
+			<Komplettfahrt>true</Komplettfahrt>
+			<IstHalt>
+				<HaltID>ODEG_900435229</HaltID>
+				<HaltestellenName>Lauchh M. Heßmer- Platz</HaltestellenName>
+				<Abfahrtszeit>2024-04-11T13:24:00Z</Abfahrtszeit>
+				<IstAbfahrtPrognose>2024-04-11T13:24:00Z</IstAbfahrtPrognose>
+				<AbfahrtssteigText>1</AbfahrtssteigText>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900435176</HaltID>
+				<HaltestellenName>Lauchh M. Haus d. Jugend</HaltestellenName>
+				<Abfahrtszeit>2024-04-11T13:25:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T13:25:00Z</Ankunftszeit>
+				<IstAbfahrtPrognose>2024-04-11T13:25:00Z</IstAbfahrtPrognose>
+				<IstAnkunftPrognose>2024-04-11T13:25:00Z</IstAnkunftPrognose>
+				<AbfahrtssteigText>1</AbfahrtssteigText>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900435106</HaltID>
+				<HaltestellenName>Lauchh M. Seniorenhof</HaltestellenName>
+				<Abfahrtszeit>2024-04-11T13:26:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T13:26:00Z</Ankunftszeit>
+				<IstAbfahrtPrognose>2024-04-11T13:26:00Z</IstAbfahrtPrognose>
+				<IstAnkunftPrognose>2024-04-11T13:26:00Z</IstAnkunftPrognose>
+				<AbfahrtssteigText>1</AbfahrtssteigText>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900435105</HaltID>
+				<HaltestellenName>Lauchh W. Fabrik 6</HaltestellenName>
+				<Abfahrtszeit>2024-04-11T13:27:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T13:27:00Z</Ankunftszeit>
+				<IstAbfahrtPrognose>2024-04-11T13:27:00Z</IstAbfahrtPrognose>
+				<IstAnkunftPrognose>2024-04-11T13:27:00Z</IstAnkunftPrognose>
+				<AbfahrtssteigText>1</AbfahrtssteigText>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900435137</HaltID>
+				<HaltestellenName>Lauchh West Internat</HaltestellenName>
+				<Abfahrtszeit>2024-04-11T13:29:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T13:29:00Z</Ankunftszeit>
+				<IstAbfahrtPrognose>2024-04-11T13:29:00Z</IstAbfahrtPrognose>
+				<IstAnkunftPrognose>2024-04-11T13:29:00Z</IstAnkunftPrognose>
+				<AbfahrtssteigText>1</AbfahrtssteigText>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900435136</HaltID>
+				<HaltestellenName>Lauchh W. Berliner Straße</HaltestellenName>
+				<Abfahrtszeit>2024-04-11T13:31:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T13:31:00Z</Ankunftszeit>
+				<IstAbfahrtPrognose>2024-04-11T13:31:00Z</IstAbfahrtPrognose>
+				<IstAnkunftPrognose>2024-04-11T13:31:00Z</IstAnkunftPrognose>
+				<AbfahrtssteigText>1</AbfahrtssteigText>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900415300</HaltID>
+				<HaltestellenName>Schraden Plessaer Straße</HaltestellenName>
+				<Abfahrtszeit>2024-04-11T13:36:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T13:36:00Z</Ankunftszeit>
+				<IstAbfahrtPrognose>2024-04-11T13:36:00Z</IstAbfahrtPrognose>
+				<IstAnkunftPrognose>2024-04-11T13:36:00Z</IstAnkunftPrognose>
+				<AbfahrtssteigText>2</AbfahrtssteigText>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900415303</HaltID>
+				<HaltestellenName>Schraden Oberbuschhaus</HaltestellenName>
+				<Abfahrtszeit>2024-04-11T13:38:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T13:38:00Z</Ankunftszeit>
+				<IstAbfahrtPrognose>2024-04-11T13:38:00Z</IstAbfahrtPrognose>
+				<IstAnkunftPrognose>2024-04-11T13:38:00Z</IstAnkunftPrognose>
+				<AbfahrtssteigText>2</AbfahrtssteigText>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900416011</HaltID>
+				<HaltestellenName>Plessa Amtsverwaltung</HaltestellenName>
+				<Abfahrtszeit>2024-04-11T13:40:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T13:40:00Z</Ankunftszeit>
+				<IstAbfahrtPrognose>2024-04-11T13:40:00Z</IstAbfahrtPrognose>
+				<IstAnkunftPrognose>2024-04-11T13:40:00Z</IstAnkunftPrognose>
+				<AbfahrtssteigText>1</AbfahrtssteigText>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900415770</HaltID>
+				<HaltestellenName>Kahla Kirche</HaltestellenName>
+				<Abfahrtszeit>2024-04-11T13:45:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T13:45:00Z</Ankunftszeit>
+				<IstAbfahrtPrognose>2024-04-11T13:45:00Z</IstAbfahrtPrognose>
+				<IstAnkunftPrognose>2024-04-11T13:45:00Z</IstAnkunftPrognose>
+				<AbfahrtssteigText>1</AbfahrtssteigText>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900415504</HaltID>
+				<HaltestellenName>Elsterwerda Elster-Center</HaltestellenName>
+				<Abfahrtszeit>2024-04-11T13:49:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T13:49:00Z</Ankunftszeit>
+				<IstAbfahrtPrognose>2024-04-11T13:49:00Z</IstAbfahrtPrognose>
+				<IstAnkunftPrognose>2024-04-11T13:49:00Z</IstAnkunftPrognose>
+				<AbfahrtssteigText>2</AbfahrtssteigText>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900416106</HaltID>
+				<HaltestellenName>Elsterwerda Ludwig-Jahn Str.</HaltestellenName>
+				<Abfahrtszeit>2024-04-11T13:51:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T13:51:00Z</Ankunftszeit>
+				<IstAbfahrtPrognose>2024-04-11T13:51:00Z</IstAbfahrtPrognose>
+				<IstAnkunftPrognose>2024-04-11T13:51:00Z</IstAnkunftPrognose>
+				<AbfahrtssteigText>2</AbfahrtssteigText>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900415500</HaltID>
+				<HaltestellenName>Elsterwerda Ackerstraße</HaltestellenName>
+				<Abfahrtszeit>2024-04-11T13:52:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T13:52:00Z</Ankunftszeit>
+				<IstAbfahrtPrognose>2024-04-11T13:52:00Z</IstAbfahrtPrognose>
+				<IstAnkunftPrognose>2024-04-11T13:52:00Z</IstAnkunftPrognose>
+				<AbfahrtssteigText>2</AbfahrtssteigText>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900415502</HaltID>
+				<HaltestellenName>Elsterwerda Bahnhof</HaltestellenName>
+				<Ankunftszeit>2024-04-11T13:57:00Z</Ankunftszeit>
+				<IstAnkunftPrognose>2024-04-11T13:57:00Z</IstAnkunftPrognose>
+				<AbfahrtssteigText>4</AbfahrtssteigText>
+			</IstHalt>
+			<LinienText>581</LinienText>
+			<ProduktID>Bus</ProduktID>
+			<VonRichtungText>Lauchh M. Heßmer- Platz</VonRichtungText>
+			<PrognoseMoeglich>true</PrognoseMoeglich>
+		</IstFahrt>
+		<IstFahrt>
+			<LinienID>M8</LinienID>
+			<RichtungsID>1</RichtungsID>
+			<FahrtRef>
+				<FahrtID>
+					<FahrtBezeichner>9313_8_5_51_3_1_98#BVG</FahrtBezeichner>
+					<Betriebstag>2024-04-11</Betriebstag>
+				</FahrtID>
+			</FahrtRef>
+			<Komplettfahrt>false</Komplettfahrt>
+			<IstHalt>
+				<HaltID>ODEG_900170006</HaltID>
+				<Abfahrtszeit>2024-04-11T11:52:00Z</Abfahrtszeit>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900170011</HaltID>
+				<Abfahrtszeit>2024-04-11T11:53:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T11:53:00Z</Ankunftszeit>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900170506</HaltID>
+				<Abfahrtszeit>2024-04-11T11:54:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T11:54:00Z</Ankunftszeit>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900170515</HaltID>
+				<Abfahrtszeit>2024-04-11T12:03:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T12:03:00Z</Ankunftszeit>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900170019</HaltID>
+				<Abfahrtszeit>2024-04-11T12:05:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T12:05:00Z</Ankunftszeit>
+			</IstHalt>
+			<IstHalt>
+				<HaltID>ODEG_900171517</HaltID>
+				<Abfahrtszeit>2024-04-11T12:07:00Z</Abfahrtszeit>
+				<Ankunftszeit>2024-04-11T12:07:00Z</Ankunftszeit>
+			</IstHalt>
+			<LinienText>M8</LinienText>
+			<ProduktID>MT</ProduktID>
+			<Zugname>T4012</Zugname>
+			<PrognoseMoeglich>false</PrognoseMoeglich>
+		</IstFahrt>
+	</AUSNachricht>
+</vdv:DatenAbrufenAntwort>
