@@ -120,8 +120,7 @@ const createClient = (cfg, opt = {}) => {
 	// > 5.1.1 Überblick
 	// > Eine AboID ist innerhalb eines jeden Dienstes eindeutig.
 	// todo: persist counter across client restarts, or append random characters? (according to the xsd, AboID must be an integer)
-	let _nextAboId = 1
-	const getNextAboId = () => String(_nextAboId++)
+	const getNextAboId = () => String(10000 + Math.round(Math.random() * 9999))
 	// service -> set of AboIDs
 	const subscriptions = Object.fromEntries(
 		SERVICES.map(svc => [svc, new Set()]),
