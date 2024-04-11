@@ -97,7 +97,19 @@ const createClient = (cfg, opt = {}) => {
 		logger,
 	}
 
-	const sendRequest = createSendRequest(cfg, opt)
+	const sendRequest = createSendRequest({
+		...cfg,
+		// separate logger for network requests, they are too noisy usually
+		logger: pino({
+			level: process.env.LOG_LEVEL_REQUESTS || 'info',
+			// todo: remove some fields from logs, e.g.
+			// - clientRequest.agent
+			// - clientRequest.res
+			// - serverResponse._readableState
+			// - serverResponse.client
+			// - serverResponse.req
+		}),
+	}, opt)
 	const {router, errorHandler} = createServer(cfg, opt)
 
 	// ----------------------------------
