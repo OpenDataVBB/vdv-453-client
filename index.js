@@ -2,6 +2,7 @@
 
 import pino from 'pino'
 import {strictEqual, ok} from 'node:assert'
+import {EventEmitter} from 'node:events'
 import {createServer as createHttpServer} from 'node:http'
 import {x} from 'xastscript'
 import {u} from 'unist-builder'
@@ -116,6 +117,8 @@ const createClient = (cfg, opt = {}) => {
 	const {router, errorHandler} = createServer(cfg, opt)
 
 	// todo: serve basic information about the service on /
+
+	const data = new EventEmitter()
 
 	// ----------------------------------
 
@@ -462,18 +465,14 @@ const createClient = (cfg, opt = {}) => {
 		return await _unsubscribeAll(DFI)
 	}
 
-	const dfiData = new TransformStream()
-	const _dfiDataWriter = dfiData.writable.getWriter()
 	_handleDatenBereitAnfrage(DFI, async () => {
 		// _handleDatenBereitAnfrage does not handle rejections, so we do it here
 		try {
-			const data = _sendDatenAbrufenAnfrage(DFI, datensatzAlle)
-			for await (const azbNachricht of data) {
-				// todo: emit azbNachricht.$children instead?
-				await _dfiDataWriter.write(azbNachricht)
+			const els = _sendDatenAbrufenAnfrage(DFI, datensatzAlle)
+			for await (const azbNachricht of els) {
+				// todo: additionally emit azbNachricht.$children?
+				data.emit(`raw:${DFI}:AZBNachricht`, azbNachricht)
 			}
-			// todo: don't close, to allow fetching again later
-			await _dfiDataWriter.close()
 		} catch (err) {
 			// todo: emit error on `dfiData` somehow?
 			logger.error({
@@ -532,19 +531,16 @@ const createClient = (cfg, opt = {}) => {
 		return await _unsubscribeAll(AUS)
 	}
 
-	const ausData = new TransformStream()
-	const _ausDataWriter = ausData.writable.getWriter()
-	_handleDatenBereitAnfrage(AUS, async () => {
-		// _handleDatenBereitAnfrage does not handle rejections, so we do it here
+	const _fetchNewAusData = async () => {
 		try {
-			const data = _sendDatenAbrufenAnfrage(AUS, datensatzAlle)
-			for await (const ausNachricht of data) {
+			const els = _sendDatenAbrufenAnfrage(AUS, datensatzAlle)
+			for await (const ausNachricht of els) {
+				data.emit(`raw:${AUS}:AUSNachricht`, ausNachricht)
 				for (const child of ausNachricht.$children) {
-					await _ausDataWriter.write(child)
+					// e.g. `raw:aus:IstFahrt`
+					data.emit(`raw:${AUS}:${child.$name}`, child)
 				}
 			}
-			// todo: don't close, to allow fetching again later
-			await _ausDataWriter.close()
 		} catch (err) {
 			// todo: emit error on `ausData` somehow?
 			logger.error({
@@ -569,14 +565,13 @@ const createClient = (cfg, opt = {}) => {
 		logger,
 		sendRequest,
 		httpServer,
+		data,
 		dfiSubscribe,
 		dfiUnsubscribe,
 		dfiUnsubscribeAll,
-		dfiData,
 		ausSubscribe,
 		ausUnsubscribe,
 		ausUnsubscribeAll,
-		ausData,
 	}
 }
 
