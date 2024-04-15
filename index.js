@@ -75,9 +75,15 @@ const SECOND = 1000
 const MINUTE = 60 * SECOND
 const HOUR = 60 * MINUTE
 
-const waitFor = async (ms) => {
+const waitFor = async (ms, abortSignal) => {
 	await new Promise((resolve) => {
-		setTimeout(resolve, ms)
+		const timer = setTimeout(resolve, ms)
+		const onAbort = () => {
+			abortSignal.removeEventListener('abort', onAbort)
+			clearTimeout(timer)
+			resolve()
+		}
+		abortSignal.addEventListener('abort', onAbort)
 	})
 }
 
@@ -287,17 +293,29 @@ const createClient = (cfg, opt = {}) => {
 						service,
 					}, 'manually fetching data')
 
+					// `subscriptionAbortController` controls the periodic fetching, `fetchAbortController` controls an individual fetch. The former aborts the latter, but not vice versa.
+					const fetchAbortController = new AbortController()
+					const cancelFetch = () => {
+						console.error('subscriptionAbortController.signal.reason', subscriptionAbortController.signal.reason) // todo: remove
+						fetchAbortController.abort(subscriptionAbortController.signal.reason)
+					}
+					subscriptionAbortController.signal.addEventListener('abort', cancelFetch)
+
 					try {
-						await fetch()
+						await fetch({
+							abortController: fetchAbortController,
+						})
 					} catch (err) {
 						logger.warn({
 							service,
 							err,
 						}, `failed to fetch & process data: ${err.message}`)
+					} finally {
+						subscriptionAbortController.signal.removeEventListener('abort', cancelFetch)
 					}
 
 					// todo: make configurable based on previous fetch's success & duration
-					await waitFor(fetchInterval)
+					await waitFor(fetchInterval, subscriptionAbortController.signal)
 				}
 			}
 
@@ -397,10 +415,12 @@ const createClient = (cfg, opt = {}) => {
 	const _sendDatenAbrufenAnfrage = async function* (service, opt = {}, recursionLevel = 0) {
 		opt = {
 			datensatzAlle: false,
+			abortController: new AbortController(),
 			...opt,
 		}
 		const {
 			datensatzAlle,
+			abortController,
 		} = opt
 		if (recursionLevel >= DATEN_ABRUFEN_MAX_RECURSIONS) {
 			const err = new Error(`${service}: too many recursions while fetching data`)
@@ -443,6 +463,7 @@ const createClient = (cfg, opt = {}) => {
 				// > 	- Meldungen der Meldungsart `Ausfall` bzw. `AbbringerFahrtLoeschen` (wenn möglich mit Ursache) für ausgefallene Fahrten im Rahmen der Gültigkeit des aktiven Abos.
 				x('DatensatzAlle', {}, datensatzAlle + ''),
 			],
+			{abortController},
 		)
 
 		const tags = parseResponse([
@@ -452,6 +473,14 @@ const createClient = (cfg, opt = {}) => {
 		])
 		let weitereDaten = false
 		for await (const [tag, el] of tags) {
+			if (abortController.signal.aborted) {
+				logger.debug({
+					...logCtx,
+					reason: abortController.signal.reason,
+				}, 'fetching aborted')
+				return;
+			}
+
 			if (tag === BESTAETIGUNG) {
 				assertBestaetigungOk(el)
 				logCtx.bestaetigung = el
@@ -531,9 +560,14 @@ const createClient = (cfg, opt = {}) => {
 		return await _unsubscribeAll(DFI)
 	}
 
-	const _fetchNewDfiData = async () => {
+	const _fetchNewDfiData = async (cfg) => {
+		const {
+			abortController,
+		} = cfg
+
 		const els = _sendDatenAbrufenAnfrage(DFI, {
 			datensatzAlle,
+			abortController,
 		})
 		for await (const azbNachricht of els) {
 			// todo: additionally emit azbNachricht.$children?
@@ -543,7 +577,10 @@ const createClient = (cfg, opt = {}) => {
 
 	// fetch triggered by the data provider
 	_handleDatenBereitAnfrage(DFI, async () => {
-		await _fetchNewDfiData()
+		await _fetchNewDfiData({
+			// There is no reasonable way to abort here, so we make a dummy AbortController.
+			abortController: new AbortController()
+		})
 	})
 
 	// ----------------------------------
@@ -597,9 +634,14 @@ const createClient = (cfg, opt = {}) => {
 		return await _unsubscribeAll(AUS)
 	}
 
-	const _fetchNewAusData = async () => {
+	const _fetchNewAusData = async (cfg) => {
+		const {
+			abortController,
+		} = cfg
+
 		const els = _sendDatenAbrufenAnfrage(AUS, {
 			datensatzAlle,
+			abortController,
 		})
 		for await (const ausNachricht of els) {
 			data.emit(`raw:${AUS}:AUSNachricht`, ausNachricht)
@@ -617,6 +659,8 @@ const createClient = (cfg, opt = {}) => {
 	// fetch triggered by the data provider
 	_handleDatenBereitAnfrage(AUS, async () => {
 		await _fetchNewAusData({
+			// There is no reasonable way to abort here, so we make a dummy AbortController.
+			abortController: new AbortController()
 		})
 	})
 
