@@ -75,6 +75,12 @@ const SECOND = 1000
 const MINUTE = 60 * SECOND
 const HOUR = 60 * MINUTE
 
+const waitFor = async (ms) => {
+	await new Promise((resolve) => {
+		setTimeout(resolve, ms)
+	})
+}
+
 // This implementation follows the VDV 453 spec, as documented in the "VDV-453 Ist-Daten-Schnittstelle – Version 2.6.1" document. It also supports the VDV 454 extension, as documented in the "VDV-454 Ist-Daten-Schnittstelle – Fahrplanauskunft – Version 2.2.1".
 // https://web.archive.org/web/20231208122259/https://www.vdv.de/vdv-schrift-453-v2.6.1-de.pdfx?forced=true
 // https://web.archive.org/web/20231208122259/https://www.vdv.de/454v2.2.1-sd.pdfx?forced=true
@@ -89,10 +95,13 @@ const createClient = (cfg, opt = {}) => {
 
 	const {
 		logger,
+		fetchSubscriptionsDataPeriodically,
 	} = {
 		logger: pino({
 			level: process.env.LOG_LEVEL || 'info',
 		}),
+		// The VBB VDV-453 system doesn't seem to notify us about new/changed data (see _handleDatenBereitAnfrage), so we fetch the data "manually" periodically.
+		fetchSubscriptionsDataPeriodically: true,
 		...opt,
 	}
 	ok('object' === typeof logger && logger, 'opt.logger must be an object')
@@ -127,11 +136,11 @@ const createClient = (cfg, opt = {}) => {
 	// Technically, we don't need globally unique subscription IDs.
 	// > 5.1.1 Überblick
 	// > Eine AboID ist innerhalb eines jeden Dienstes eindeutig.
-	// todo: persist counter across client restarts, or append random characters? (according to the xsd, AboID must be an integer)
 	const getNextAboId = () => String(10000 + Math.round(Math.random() * 9999))
-	// service -> set of AboIDs
+	// todo: persist AboIDs across client restarts, reinstate fetch timers after restarts?
+	// service -> AboID -> subscriptionAbortController
 	const subscriptions = Object.fromEntries(
-		SERVICES.map(svc => [svc, new Set()]),
+		SERVICES.map(svc => [svc, new Map()]),
 	)
 
 	// todo: make configurable with a decent UX
@@ -233,7 +242,7 @@ const createClient = (cfg, opt = {}) => {
 		}
 	}
 
-	const _subscribe = async (service, aboSubChildren, expiresAt) => {
+	const _subscribe = async (service, aboSubChildren, expiresAt, fetch, fetchInterval) => {
 		// todo: validate arguments
 		ok(
 			ABO_ANFRAGE_ROOT_SUB_TAGS_BY_SERVICE.has(service),
@@ -257,16 +266,49 @@ const createClient = (cfg, opt = {}) => {
 			}, aboSubChildren)
 		]
 
+		const subscriptionAbortController = new AbortController()
 		// keep track of the subscription using the `aboID`
 		// We do this before sending the request because we might crash while the request is in-flight.
 		// todo: do this after the request has been sent?
-		subscriptions[service].add(aboId)
+		subscriptions[service].set(aboId, subscriptionAbortController)
 
 		const bestaetigung = await _sendAboAnfrage(
 			service,
 			aboParams,
 		)
 		logCtx.bestaetigung = bestaetigung
+
+		if (fetchSubscriptionsDataPeriodically) {
+			ok(Number.isInteger(fetchInterval), 'fetchInterval must be an integer')
+
+			const fetchPeriodicallyAndLogErrors = async () => {
+				while (!subscriptionAbortController.signal.aborted) {
+					logger.debug({
+						service,
+					}, 'manually fetching data')
+
+					try {
+						await fetch()
+					} catch (err) {
+						logger.warn({
+							service,
+							err,
+						}, `failed to fetch & process data: ${err.message}`)
+					}
+
+					// todo: make configurable based on previous fetch's success & duration
+					await waitFor(fetchInterval)
+				}
+			}
+
+			fetchPeriodicallyAndLogErrors()
+			.catch((err) => {
+				logger.error({
+					service,
+					err,
+				}, `failed to fetch data periodically: ${err.message}`)
+			})
+		}
 
 		logger.debug(logCtx, 'successfully subscribed to items')
 		return {
@@ -289,6 +331,8 @@ const createClient = (cfg, opt = {}) => {
 		logCtx.bestaetigung = bestaetigung
 
 		for (const aboId of aboIds) {
+			const abortController = subscriptions[service].get(aboId)
+			abortController.abort('unsubscribed manually')
 			subscriptions[service].delete(aboId)
 		}
 		logger.debug(logCtx, 'successfully unsubscribed from subscriptions')
@@ -309,10 +353,17 @@ const createClient = (cfg, opt = {}) => {
 		)
 		logCtx.bestaetigung = bestaetigung
 
+		for (const abortController of subscriptions[service].values()) {
+			abortController.abort('unsubscribed manually')
+		}
 		subscriptions[service].clear()
 		logger.debug(logCtx, 'successfully unsubscribed from all subscriptions')
 	}
 
+	// The server should notify the client of new/changed data, so that the latter can then request it.
+	// > 5.1.3.1 Datenbereitstellung signalisieren (DatenBereitAnfrage)
+	// > Ist das Abonnement eingerichtet und sind die Daten bereitgestellt, wird der Datenkonsument durch eine DatenBereitAnfrage über das Vorhandensein aktualisierter Daten informiert. Dies geschieht bei jeder Änderung der Daten die dem Abonnement zugeordnet sind. Die Signalisierung bezieht sich auf alle Abonnements eines Dienstes.
+	// Note: In practice, with the VBB system, this doesn't seem to happen.
 	const _handleDatenBereitAnfrage = (service, onDatenBereit) => {
 		_onRequest(service, DATEN_BEREIT, async (req, res) => {
 			const logCtx = {
@@ -324,11 +375,17 @@ const createClient = (cfg, opt = {}) => {
 			logger.debug(logCtx, 'received datenBereitAnfrage')
 
 			res.respondWithResponse({
-				// todo: are we ever not okay? what if there are 0 subscriptions for this service?
 				ok: true,
 				bestaetigung: true, // send Bestaetigung element
 			})
-			onDatenBereit()
+			try {
+				await onDatenBereit()
+			} catch (err) {
+				logger.warn({
+					service,
+					err,
+				}, `failed to handle DatenBereitAnfrage: ${err.message}`)
+			}
 		})
 	}
 
@@ -440,6 +497,7 @@ const createClient = (cfg, opt = {}) => {
 			richtungsId,
 			vorschauzeit,
 			hysterese,
+			fetchInterval,
 		} = {
 			expiresAt: Date.now() + HOUR,
 			linienId: null,
@@ -447,6 +505,7 @@ const createClient = (cfg, opt = {}) => {
 			vorschauzeit: 10, // minutes
 			// todo: is `0` possible? does it provide more data?
 			hysterese: 1, // seconds
+			fetchInterval: 30_000, // 30s
 			...opt,
 		}
 		// todo: validate arguments
@@ -463,7 +522,7 @@ const createClient = (cfg, opt = {}) => {
 			// todo: MaxTextLaenge
 			// todo: NurAktualisierung
 		]
-		return await _subscribe(DFI, aboSubChildren, expiresAt)
+		return await _subscribe(DFI, aboSubChildren, expiresAt, _fetchNewDfiData, fetchInterval)
 	}
 	const dfiUnsubscribe = async (...aboIds) => {
 		return await _unsubscribe(DFI, aboIds)
@@ -472,21 +531,19 @@ const createClient = (cfg, opt = {}) => {
 		return await _unsubscribeAll(DFI)
 	}
 
-	_handleDatenBereitAnfrage(DFI, async () => {
-		// _handleDatenBereitAnfrage does not handle rejections, so we do it here
-		try {
-			const els = _sendDatenAbrufenAnfrage(DFI, datensatzAlle)
-			for await (const azbNachricht of els) {
-				// todo: additionally emit azbNachricht.$children?
-				data.emit(`raw:${DFI}:AZBNachricht`, azbNachricht)
-			}
-		} catch (err) {
-			// todo: emit error on `dfiData` somehow?
-			logger.error({
-				service: DFI,
-				err,
-			}, `failed to fetch data: ${err.message}`)
+	const _fetchNewDfiData = async () => {
+		const els = _sendDatenAbrufenAnfrage(DFI, {
+			datensatzAlle,
+		})
+		for await (const azbNachricht of els) {
+			// todo: additionally emit azbNachricht.$children?
+			data.emit(`raw:${DFI}:AZBNachricht`, azbNachricht)
 		}
+	}
+
+	// fetch triggered by the data provider
+	_handleDatenBereitAnfrage(DFI, async () => {
+		await _fetchNewDfiData()
 	})
 
 	// ----------------------------------
@@ -498,6 +555,7 @@ const createClient = (cfg, opt = {}) => {
 			// richtungsId,
 			vorschauzeit,
 			hysterese,
+			fetchInterval,
 		} = {
 			expiresAt: Date.now() + HOUR,
 			// linienId: null,
@@ -506,6 +564,7 @@ const createClient = (cfg, opt = {}) => {
 			// The VBB VDV-453 server reports:
 			// > Die Hysterese des Lieferanten "VBB DDS" ist 60 Sekunden […].
 			hysterese: 60, // seconds
+			fetchInterval: 30_000, // 30s
 			...opt,
 		}
 		// todo: validate arguments
@@ -529,7 +588,7 @@ const createClient = (cfg, opt = {}) => {
 			// Note: <Vorschauzeit> has to be the last child element!
 			x('Vorschauzeit', {}, vorschauzeit),
 		]
-		return await _subscribe(AUS, aboSubChildren, expiresAt)
+		return await _subscribe(AUS, aboSubChildren, expiresAt, _fetchNewAusData, fetchInterval)
 	}
 	const ausUnsubscribe = async (...aboIds) => {
 		return await _unsubscribe(AUS, aboIds)
@@ -539,26 +598,26 @@ const createClient = (cfg, opt = {}) => {
 	}
 
 	const _fetchNewAusData = async () => {
-		try {
-			const els = _sendDatenAbrufenAnfrage(AUS, datensatzAlle)
-			for await (const ausNachricht of els) {
-				data.emit(`raw:${AUS}:AUSNachricht`, ausNachricht)
-				for (const child of ausNachricht.$children) {
-					// e.g. `raw:aus:IstFahrt`
-					data.emit(`raw:${AUS}:${child.$name}`, child)
-					if (child.$name === 'IstFahrt') {
-						const istFahrt = parseAusIstFahrt(child)
-						data.emit(`${AUS}:IstFahrt`, istFahrt)
-					}
+		const els = _sendDatenAbrufenAnfrage(AUS, {
+			datensatzAlle,
+		})
+		for await (const ausNachricht of els) {
+			data.emit(`raw:${AUS}:AUSNachricht`, ausNachricht)
+			for (const child of ausNachricht.$children) {
+				// e.g. `raw:aus:IstFahrt`
+				data.emit(`raw:${AUS}:${child.$name}`, child)
+				if (child.$name === 'IstFahrt') {
+					const istFahrt = parseAusIstFahrt(child)
+					data.emit(`${AUS}:IstFahrt`, istFahrt)
 				}
 			}
-		} catch (err) {
-			// todo: emit error on `ausData` somehow?
-			logger.error({
-				service: AUS,
-				err,
-			}, `failed to fetch & process data: ${err.message}`)
 		}
+	}
+
+	// fetch triggered by the data provider
+	_handleDatenBereitAnfrage(AUS, async () => {
+		await _fetchNewAusData({
+		})
 	})
 
 	// ----------------------------------
