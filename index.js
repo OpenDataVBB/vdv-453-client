@@ -575,6 +575,19 @@ const createClient = (cfg, opt = {}) => {
 		}
 	}
 
+	// user-triggered manual fetch
+	const dfiFetchData = async (opt = {}) => {
+		const {
+			abortController,
+		} = {
+			abortController: new AbortController(),
+			...opt,
+		}
+		await _fetchNewDfiData({
+			abortController,
+		})
+	}
+
 	// fetch triggered by the data provider
 	_handleDatenBereitAnfrage(DFI, async () => {
 		await _fetchNewDfiData({
@@ -656,6 +669,19 @@ const createClient = (cfg, opt = {}) => {
 		}
 	}
 
+	// user-triggered manual fetch
+	const ausFetchData = async (opt = {}) => {
+		const {
+			abortController,
+		} = {
+			abortController: new AbortController(),
+			...opt,
+		}
+		await _fetchNewAusData({
+			abortController,
+		})
+	}
+
 	// fetch triggered by the data provider
 	_handleDatenBereitAnfrage(AUS, async () => {
 		await _fetchNewAusData({
@@ -683,9 +709,11 @@ const createClient = (cfg, opt = {}) => {
 		dfiSubscribe,
 		dfiUnsubscribe,
 		dfiUnsubscribeAll,
+		dfiFetchData,
 		ausSubscribe,
 		ausUnsubscribe,
 		ausUnsubscribeAll,
+		ausFetchData,
 	}
 }
 
