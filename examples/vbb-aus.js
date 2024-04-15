@@ -1,5 +1,5 @@
 import {promisify} from 'node:util'
-import {createClient} from './index.js'
+import {createClient} from '../index.js'
 
 const abortWithError = (err) => {
 	console.error(err)
@@ -19,17 +19,12 @@ if (!process.env.PORT) {
 }
 const PORT = process.env.PORT
 
-if (!process.env.VDV_453_ANZEIGERBEREICH_ID) {
-	abortWithError('missing/empty $VDV_453_ANZEIGERBEREICH_ID')
-}
-const ANZEIGERBEREICH_ID = process.env.VDV_453_ANZEIGERBEREICH_ID
-
 const {
 	logger,
 	httpServer,
 	data,
-	dfiSubscribe,
-	dfiUnsubscribeAll,
+	ausSubscribe,
+	ausUnsubscribe,
 } = createClient({
 	leitstelle: LEITSTELLE,
 	endpoint: ENDPOINT,
@@ -38,16 +33,17 @@ const {
 await promisify(httpServer.listen.bind(httpServer))(PORT)
 logger.info(`listening on port ${PORT}`)
 
-const {aboId} = await dfiSubscribe(ANZEIGERBEREICH_ID, {
+const {aboId} = await ausSubscribe({
 	expiresAt: Date.now() + 10 * 60 * 1000, // for 10min
 })
 process.on('SIGINT', () => {
-	dfiUnsubscribeAll()
+	ausUnsubscribe(aboId)
 	.then(() => {
 		httpServer.close()
-		process.exit()
 	})
 	.catch(abortWithError)
 })
 
-data.on('dfi:AZBNachricht', console.log)
+data.on('aus:IstFahrt', (istFahrt) => {
+	console.log(istFahrt)
+})
