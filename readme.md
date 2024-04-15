@@ -19,8 +19,56 @@ npm install derhuerst/vdv-453-client
 
 ## Usage
 
+With the organisation providing the VDV 453 API, you will have to agree upon a *Leitstellenkennung*, which is a bit like an HTTP User-Agent:
+
+> 6.1.3 Leitstellenkennung
+> Um Botschaften verschiedener Kommunikationspartner innerhalb eines Dienstes unterscheiden zu können, enthält jede Nachricht eine eindeutige Leitstellenkennung (Attribut Sender) des nachfragenden Systems. […]
+
 ```js
-// todo
+const LEITSTELLE = '…'
+```
+
+```js
+import {createClient as createVdv453Client} from 'vdv-453-client'
+
+const {
+	httpServer,
+	data,
+	dfiSubscribe,
+	dfiUnsubscribe,
+	ausSubscribe,
+	ausUnsubscribe,
+} = createVdv453Client({
+	leitstelle: LEITSTELLE,
+	endpoint: '…', // HTTP(s) URL
+})
+
+// start HTTP server
+await new Promise((resolve, reject) => {
+	httpServer.listen(3000, (err) => {
+		if (err) reject(err)
+		else resolve()
+	})
+})
+
+// subscribe to VDV-453 DFI service
+const {aboId: dfiAboId} = await dfiSubscribe()
+data.on('dfi:AZBNachricht', (azbNachricht) => console.log(azbNachricht))
+
+// subscribe to VDV-454 AUS service
+const {aboId: ausAboId} = await ausSubscribe()
+data.on('aus:IstFahrt', (istFahrt) => console.log(istFahrt))
+
+process.once('SIGINT', {
+	Promise.all([
+		dfiUnsubscribe(dfiAboId),
+		ausUnsubscribe(ausAboId),
+	])
+	.then(() => {
+		httpServer.close()
+	})
+	.catch(abortWithError)
+})
 ```
 
 
