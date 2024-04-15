@@ -5,7 +5,6 @@ import {strictEqual, ok} from 'node:assert'
 import {EventEmitter} from 'node:events'
 import {createServer as createHttpServer} from 'node:http'
 import {x} from 'xastscript'
-import {u} from 'unist-builder'
 import {CLIENT_CALLS, SERVER_CALLS, ALL_CALLS} from './lib/calls.js'
 import {createSendRequest, BESTAETIGUNG,} from './lib/send-request.js'
 import {createServer} from './lib/server.js'
@@ -337,7 +336,7 @@ const createClient = (cfg, opt = {}) => {
 	// > 5.1.4.1 Datenübertragung anfordern (DatenAbrufenAnfrage)
 	// > Wurde bereits eine DatenAbrufenAnfrage vom Client an den Server versandt, so ist für diese vom Client eine DatenAbrufenAntwort abzuwarten (Antwort, oder Timeout), bevor erneut eine DatenAbrufenAnfrage versandt wird. Es wird daher empfohlen keine weitere DatenAbrufenAnfrage zu stellen, solange noch eine DatenAbrufenAnfrage aktiv ist.
 	const WEITERE_DATEN = 'WeitereDaten'
-	const DATEN_ABRUFEN_MAX_RECURSIONS = 100
+	const DATEN_ABRUFEN_MAX_RECURSIONS = 300
 	const _sendDatenAbrufenAnfrage = async function* (service, opt = {}, recursionLevel = 0) {
 		opt = {
 			datensatzAlle: false,
@@ -365,7 +364,7 @@ const createClient = (cfg, opt = {}) => {
 			dataSubTag,
 			recursionLevel,
 		}
-		logger.debug(logCtx, 'requesting data')
+		logger.trace(logCtx, 'requesting data')
 
 		const {
 			parseResponse,
@@ -492,7 +491,7 @@ const createClient = (cfg, opt = {}) => {
 
 	// ----------------------------------
 
-	const ausSubscribe = async (azbId, opt = {}) => {
+	const ausSubscribe = async (opt = {}) => {
 		const {
 			expiresAt,
 			// linienId,
