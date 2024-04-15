@@ -338,7 +338,14 @@ const createClient = (cfg, opt = {}) => {
 	// > Wurde bereits eine DatenAbrufenAnfrage vom Client an den Server versandt, so ist für diese vom Client eine DatenAbrufenAntwort abzuwarten (Antwort, oder Timeout), bevor erneut eine DatenAbrufenAnfrage versandt wird. Es wird daher empfohlen keine weitere DatenAbrufenAnfrage zu stellen, solange noch eine DatenAbrufenAnfrage aktiv ist.
 	const WEITERE_DATEN = 'WeitereDaten'
 	const DATEN_ABRUFEN_MAX_RECURSIONS = 100
-	const _sendDatenAbrufenAnfrage = async function* (service, datensatzAlle = false, recursionLevel = 0) {
+	const _sendDatenAbrufenAnfrage = async function* (service, opt = {}, recursionLevel = 0) {
+		opt = {
+			datensatzAlle: false,
+			...opt,
+		}
+		const {
+			datensatzAlle,
+		} = opt
 		if (recursionLevel >= DATEN_ABRUFEN_MAX_RECURSIONS) {
 			const err = new Error(`${service}: too many recursions while fetching data`)
 			err.service = service
@@ -410,7 +417,7 @@ const createClient = (cfg, opt = {}) => {
 
 		if (weitereDaten) {
 			logger.debug(logCtx, `received DatenAbrufenAntwort with WeitereDaten=true, recursing (${recursionLevel + 1})`)
-			yield* _sendDatenAbrufenAnfrage(service, datensatzAlle, recursionLevel + 1)
+			yield* _sendDatenAbrufenAnfrage(service, opt, recursionLevel + 1)
 		}
 	}
 
