@@ -11,6 +11,7 @@ import {createSendRequest, BESTAETIGUNG,} from './lib/send-request.js'
 import {createServer} from './lib/server.js'
 import {SERVICES} from './lib/services.js'
 import {getZst} from './lib/zst.js'
+import {parseAusIstFahrt} from './lib/parse-aus-istfahrt.js'
 
 const {
 	DFI,
@@ -539,6 +540,10 @@ const createClient = (cfg, opt = {}) => {
 				for (const child of ausNachricht.$children) {
 					// e.g. `raw:aus:IstFahrt`
 					data.emit(`raw:${AUS}:${child.$name}`, child)
+					if (child.$name === 'IstFahrt') {
+						const istFahrt = parseAusIstFahrt(child)
+						data.emit(`${AUS}:IstFahrt`, istFahrt)
+					}
 				}
 			}
 		} catch (err) {
