@@ -6,7 +6,11 @@ import {EventEmitter} from 'node:events'
 import {createServer as createHttpServer} from 'node:http'
 import {x} from 'xastscript'
 import {CLIENT_CALLS, SERVER_CALLS, ALL_CALLS} from './lib/calls.js'
-import {createSendRequest, BESTAETIGUNG,} from './lib/send-request.js'
+import {
+	createSendRequest,
+	BESTAETIGUNG,
+	Vdv453HttpError, Vdv453ApiError,
+} from './lib/send-request.js'
 import {createServer} from './lib/server.js'
 import {SERVICES} from './lib/services.js'
 import {getZst} from './lib/zst.js'
@@ -718,6 +722,7 @@ const createClient = (cfg, opt = {}) => {
 }
 
 export {
+	Vdv453HttpError, Vdv453ApiError,
 	SERVICES,
 	CLIENT_CALLS, SERVER_CALLS, ALL_CALLS,
 	createClient,
