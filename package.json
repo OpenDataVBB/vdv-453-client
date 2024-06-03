@@ -1,7 +1,7 @@
 {
 	"private": true,
 	"name": "vdv-453-client",
-	"description": "Subscribe to data from a VDV 453 API.",
+	"description": "Subscribe to data from a VDV-453/VDV-454 API.",
 	"version": "1.0.0",
 	"type": "module",
 	"main": "index.js",
@@ -12,13 +12,17 @@
 	],
 	"keywords": [
 		"vdv 453",
+		"vdv 454",
 		"realtime",
 		"public transport",
 		"transit"
 	],
 	"author": "Jannis R <mail@jannisr.de>",
 	"homepage": "https://github.com/derhuerst/vdv-453-client",
-	"repository": "derhuerst/vdv-453-client",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/derhuerst/vdv-453-client.git"
+	},
 	"bugs": "https://github.com/derhuerst/vdv-453-client/issues",
 	"license": "ISC",
 	"engines": {
