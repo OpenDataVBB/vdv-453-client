@@ -394,6 +394,15 @@ const createClient = (cfg, opt = {}) => {
 				service,
 			}
 
+			if (subscriptions[service].size === 0) { // 0 subscriptions on `service`
+				logger.warn(logCtx, 'received datenBereitAnfrage, even though we don\'t know about a subscription')
+				res.respondWithResponse({
+					ok: false,
+					bestaetigung: true, // send Bestaetigung element
+				})
+				return;
+			}
+
 			const datenBereitAnfrage = await req.parseWholeRoot('datenBereitAnfrage')
 			logCtx.datenBereitAnfrage = datenBereitAnfrage
 			logger.debug(logCtx, 'received datenBereitAnfrage')
