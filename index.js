@@ -105,10 +105,21 @@ const createClient = (cfg, opt = {}) => {
 
 	const {
 		logger,
+		requestsLogger,
 		fetchSubscriptionsDataPeriodically,
 	} = {
 		logger: pino({
 			level: process.env.LOG_LEVEL || 'info',
+		}),
+		// separate logger for network requests, they are too noisy usually
+		requestsLogger: pino({
+			level: process.env.LOG_LEVEL_REQUESTS || 'info',
+			// todo: remove some fields from logs, e.g.
+			// - clientRequest.agent
+			// - clientRequest.res
+			// - serverResponse._readableState
+			// - serverResponse.client
+			// - serverResponse.req
 		}),
 		// The VBB VDV-453 system doesn't seem to notify us about new/changed data (see _handleDatenBereitAnfrage), so we fetch the data "manually" periodically.
 		fetchSubscriptionsDataPeriodically: true,
@@ -122,16 +133,7 @@ const createClient = (cfg, opt = {}) => {
 
 	const sendRequest = createSendRequest({
 		...cfg,
-		// separate logger for network requests, they are too noisy usually
-		logger: pino({
-			level: process.env.LOG_LEVEL_REQUESTS || 'info',
-			// todo: remove some fields from logs, e.g.
-			// - clientRequest.agent
-			// - clientRequest.res
-			// - serverResponse._readableState
-			// - serverResponse.client
-			// - serverResponse.req
-		}),
+		logger: requestsLogger,
 	}, opt)
 	const {router, errorHandler} = createServer(cfg, opt)
 
