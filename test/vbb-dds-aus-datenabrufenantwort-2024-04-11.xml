@@ -3,7 +3,7 @@
 	<Bestaetigung Zst="2024-04-11T13:18:08.985Z" Ergebnis="ok" Fehlernummer="0"/>
 	<WeitereDaten>true</WeitereDaten>
 	<AUSNachricht AboID="18507">
-		<IstFahrt>
+		<IstFahrt Zst="2024-04-11T13:17:29Z">
 			<LinienID>581</LinienID>
 			<RichtungsID>2</RichtungsID>
 			<FahrtRef>
