@@ -302,7 +302,6 @@ const createClient = (cfg, opt = {}) => {
 					// `subscriptionAbortController` controls the periodic fetching, `fetchAbortController` controls an individual fetch. The former aborts the latter, but not vice versa.
 					const fetchAbortController = new AbortController()
 					const cancelFetch = () => {
-						console.error('subscriptionAbortController.signal.reason', subscriptionAbortController.signal.reason) // todo: remove
 						fetchAbortController.abort(subscriptionAbortController.signal.reason)
 					}
 					subscriptionAbortController.signal.addEventListener('abort', cancelFetch)
