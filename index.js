@@ -486,6 +486,9 @@ const createClient = (cfg, opt = {}) => {
 			{tag: dataSubTag, preserve: true},
 		])
 		let weitereDaten = false
+		const ctx = {
+			zst: null,
+		}
 		for await (const [tag, el] of tags) {
 			if (abortController.signal.aborted) {
 				logger.debug({
@@ -498,6 +501,7 @@ const createClient = (cfg, opt = {}) => {
 			if (tag === BESTAETIGUNG) {
 				assertBestaetigungOk(el)
 				logCtx.bestaetigung = el
+				ctx.zst = el.$.Zst ?? null
 				continue
 			}
 			if (tag === WEITERE_DATEN) {
@@ -508,7 +512,7 @@ const createClient = (cfg, opt = {}) => {
 				weitereDaten = true
 			}
 			if (tag === dataSubTag) {
-				yield el
+				yield [el, ctx]
 				continue
 			}
 			// todo: otherwise warn-log unexpected tag?
@@ -583,7 +587,7 @@ const createClient = (cfg, opt = {}) => {
 			datensatzAlle,
 			abortController,
 		})
-		for await (const azbNachricht of els) {
+		for await (const [azbNachricht] of els) {
 			// todo: additionally emit azbNachricht.$children?
 			data.emit(`raw:${DFI}:AZBNachricht`, azbNachricht)
 		}
@@ -670,13 +674,15 @@ const createClient = (cfg, opt = {}) => {
 			datensatzAlle,
 			abortController,
 		})
-		for await (const ausNachricht of els) {
+		for await (const [ausNachricht, ctx] of els) {
+			const {zst} = ctx
+
 			data.emit(`raw:${AUS}:AUSNachricht`, ausNachricht)
 			for (const child of ausNachricht.$children) {
 				// e.g. `raw:aus:IstFahrt`
 				data.emit(`raw:${AUS}:${child.$name}`, child)
 				if (child.$name === 'IstFahrt') {
-					const istFahrt = parseAusIstFahrt(child)
+					const istFahrt = parseAusIstFahrt(child, ctx)
 					data.emit(`${AUS}:IstFahrt`, istFahrt)
 				}
 			}
