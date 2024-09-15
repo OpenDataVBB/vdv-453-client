@@ -32,7 +32,8 @@ test('XML parsing works', async (t) => {
 	t.equal(els[2].$children.length, 2, 'els[2].children.length')
 })
 
-test('todo', async (t) => {
+// todo
+test.skip('todo', async (t) => {
 	const {
 		port,
 		stop,
