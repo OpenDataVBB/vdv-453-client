@@ -1,6 +1,6 @@
 # vdv-453-client
 
-**A client for [VDV-453 v2.3.2b](https://web.archive.org/web/20231208122259/https://www.vdv.de/453v2.3.2-sds.pdf.pdfx?forced=false)/[VDV-454 v1.2.2](https://web.archive.org/web/20231208122259/https://www.vdv.de/454v1.2.2-sds.pdf.pdfx?forced=false) (from 2013) client.** Can be used to connect to German public transport realtime data backends (*Datendrehscheiben*).
+**A client for [VDV-453 v2.3.2b](https://web.archive.org/web/20231208122259/https://www.vdv.de/453v2.3.2-sds.pdf.pdfx?forced=false)/[VDV-454 v1.2.2](https://web.archive.org/web/20231208122259/https://www.vdv.de/454v1.2.2-sds.pdf.pdfx?forced=false) (from 2013) systems.** Can be used to connect to German public transport realtime data backends (*Datendrehscheiben*).
 
 *Note:* This client supports neither the latest 2.x spec versions ([VDV-453 v2.6.1](https://www.vdv.de/vdv-schrift-453-v2.6.1-de.pdfx?forced=true)/[VDV-454 v2.2.1](https://www.vdv.de/454v2.2.1-sd.pdfx?forced=true)) nor the latest 3.x spec versions ([VDV-453 v3.0](https://www.vdv.de/downloads/4337/453v3.0%20SDS/forced)/[VDV-454 v3.0](https://www.vdv.de/downloads/4336/454v3.0%20SDS/forced)).
 
@@ -22,7 +22,8 @@ npm install derhuerst/vdv-453-client
 With the organisation providing the VDV 453 API, you will have to agree upon a *Leitstellenkennung*, which is a bit like an HTTP User-Agent:
 
 > 6.1.3 Leitstellenkennung
-> Um Botschaften verschiedener Kommunikationspartner innerhalb eines Dienstes unterscheiden zu können, enthält jede Nachricht eine eindeutige Leitstellenkennung (Attribut Sender) des nachfragenden Systems. […]
+>
+> Um Botschaften verschiedener Kommunikationspartner innerhalb eines Dienstes unterscheiden zu können, enthält jede Nachricht eine eindeutige Leitstellenkennung (Attribut `Sender`) des nachfragenden Systems. […]
 
 ```js
 const LEITSTELLE = '…'
@@ -70,6 +71,11 @@ process.once('SIGINT', {
 	.catch(abortWithError)
 })
 ```
+
+
+## Related
+
+- [vdv-453-nats-adapter](https://github.com/OpenDataVBB/vdv-453-nats-adapter) – Send events from a VDV-453/VDV-454 endpoint to NATS (JetStream).
 
 
 ## Contributing
