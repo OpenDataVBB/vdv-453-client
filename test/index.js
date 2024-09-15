@@ -26,10 +26,10 @@ test('XML parsing works', async (t) => {
 		els.push(el)
 	}
 
-	strictEqual(els[0].$name, 'Bestaetigung', 'els[0].$name')
-	strictEqual(els[1].$name, 'WeitereDaten', 'els[1].$name')
-	strictEqual(els[2].$name, 'AUSNachricht', 'els[2].$name')
-	strictEqual(els[2].children.length, 2, 'els[2].children.length')
+	t.equal(els[0].$name, 'Bestaetigung', 'els[0].$name')
+	t.equal(els[1].$name, 'WeitereDaten', 'els[1].$name')
+	t.equal(els[2].$name, 'AUSNachricht', 'els[2].$name')
+	t.equal(els[2].$children.length, 2, 'els[2].children.length')
 })
 
 test('todo', async (t) => {
