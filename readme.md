@@ -117,7 +117,9 @@ Therefore, when subscribing to a service, the client *must* provide am expiry da
 
 ```js
 // subscribe to VDV-453 DFI service
-const {aboId: dfiAboId} = await dfiSubscribe()
+// the ID of the stop/station (a.k.a. "Anzeigerbereich") depends on your region's data
+const SOME_ANZEIGERBEREICH_ID = 'my stop ID'
+const {aboId: dfiAboId} = await dfiSubscribe(SOME_ANZEIGERBEREICH_ID)
 unsubscribeTasks.push(() => dfiUnsubscribe(dfiAboId))
 data.on('dfi:AZBNachricht', (azbNachricht) => {
 	console.log(azbNachricht)
