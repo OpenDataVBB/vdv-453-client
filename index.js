@@ -79,6 +79,9 @@ const SECOND = 1000
 const MINUTE = 60 * SECOND
 const HOUR = 60 * MINUTE
 
+const DFI_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR,
+const AUS_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR,
+
 const waitFor = async (ms, abortSignal) => {
 	await new Promise((resolve) => {
 		const timer = setTimeout(resolve, ms)
@@ -149,6 +152,7 @@ const createClient = (cfg, opt = {}) => {
 	// > 5.1.1 Überblick
 	// > Eine AboID ist innerhalb eines jeden Dienstes eindeutig.
 	const getNextAboId = () => String(10000 + Math.round(Math.random() * 9999))
+	// todo: "Wird eine AboAnfrage mit einer AboID gestellt und es existiert bereits ein Abonnement unter dieser Bezeichnung, so wird das bestehende Abonnement überschrieben." – warn about this? does it apply across services?
 	// todo: persist AboIDs across client restarts, reinstate fetch timers after restarts?
 	// service -> AboID -> subscriptionAbortController
 	const subscriptions = Object.fromEntries(
@@ -192,6 +196,10 @@ const createClient = (cfg, opt = {}) => {
 					// todo: provide AktiveAbos if `clientStatusAnfrage.$.MitAbos` has value `true`
 					// > 5.1.8.3 ClientStatusAnfrage
 					// > Beispiel 3: Antwort des Clients: Dienst verfügbar, Client initialisiert gerade und will keine Auskunft zu den aktiven Abonnements geben:
+					// > 5.1.8.3 ClientStatusAnfrage
+					// > […]
+					// > Stellt der Server einen Unterschied zwischen seiner Abonnementliste und der Liste vom Client, kann der Server entweder stillschweigend den Unterschied beseitigen indem er die nicht aus der Clientsicht aktiven Abonnements löscht und die aus der Clientsicht aktiven Abonnements registriert und anfängt für diese Daten bereitzustellen oder er setzt den StartDienstZst in seiner StatusAntwort auf die aktuelle Zeit und erzwingt somit die Neuinitiali- sierung des Clients. Der zweite Weg wird empfohlen.
+					// > Ist die Struktur AktiveAbos leer, hat der Client keine aktiven Abonnements. Falls der Server doch welche kennt, sollen diese stillschweigend deaktiviert werden.
 				],
 			})
 		})
@@ -226,6 +234,8 @@ const createClient = (cfg, opt = {}) => {
 			// todo: otherwise warn-log unexpected tag?
 		}
 	}
+	// todo: send StatusAnfrage periodically, to detect server hiccups
+	// > Verliert der Server seine Abonnement-Daten, so ist dies zunächst vom Client aus nicht fest- stellbar. DatenBereitAnfragen bleiben zwar aus, aber dies kann nicht vom normalen Betrieb unterschieden und somit der Absturz des Servers nicht festgestellt werden. Um diesen Fall zu erkennen, sind zusätzliche, zyklische Anfragen vom Typ StatusAnfrage (5.1.8.1) zum Server zu senden. Innerhalb der StatusAntwort (5.1.8.2) gibt der Server den Zeitstempel des Dienststarts an. Fand der Dienststart nach der Einrichtung der Abonnements statt, so muss vom Verlust der Abonnements ausgegangen werden. Es ist nun zu verfahren wie beim Client-Datenverlust: Löschen und Neueinrichtung aller Abonnements.
 
 	// ----------------------------------
 
@@ -248,6 +258,8 @@ const createClient = (cfg, opt = {}) => {
 		for await (const [tag, el] of tags) {
 			if (tag === BESTAETIGUNG) {
 				assertBestaetigungOk(el)
+				// todo: warn if DatenGueltigBis < aboParams.VerfallZst?
+				// > (optional) Ende des Datenhorizontes des Datenproduzenten. Entfällt, wenn Anfrage vollständig im Datenhorizont liegt.
 				return el
 			}
 			// todo: otherwise warn-log unexpected tag?
@@ -261,6 +273,8 @@ const createClient = (cfg, opt = {}) => {
 			`invalid/unknown tag of root sub element for service "${service}"`
 		)
 		const aboSubTag = ABO_ANFRAGE_ROOT_SUB_TAGS_BY_SERVICE.get(service)
+		// todo: handle BigInt?
+		ok(Number.isInteger(expiresAt), 'expiresAt must be a UNIX timestamp')
 
 		const aboId = getNextAboId()
 		const logCtx = {
@@ -546,7 +560,7 @@ const createClient = (cfg, opt = {}) => {
 			hysterese,
 			fetchInterval,
 		} = {
-			expiresAt: Date.now() + HOUR,
+			expiresAt: Date.now() + DFI_DEFAULT_SUBSCRIPTION_TTL,
 			linienId: null,
 			richtungsId: null,
 			vorschauzeit: 10, // minutes
@@ -625,7 +639,7 @@ const createClient = (cfg, opt = {}) => {
 			hysterese,
 			fetchInterval,
 		} = {
-			expiresAt: Date.now() + HOUR,
+			expiresAt: Date.now() + AUS_DEFAULT_SUBSCRIPTION_TTL,
 			// linienId: null,
 			// richtungsId: null,
 			vorschauzeit: 10, // minutes

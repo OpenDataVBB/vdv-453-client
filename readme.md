@@ -26,6 +26,9 @@ npm install OpenDataVBB/vdv-453-client
 
 ## Usage
 
+> [!IMPORTANT]
+> While `vdv-453-client` is used in a production system at VBB, it hasn't been tested with other VDV-453/-454 systems.
+
 ### Leitstellenkennung
 
 With the organisation providing the VDV 453 API, you will have to agree upon your client's *Leitstellenkennung*, which – a bit like an HTTP User-Agent – allows the server to identify your client:
@@ -137,6 +140,9 @@ data.on('aus:IstFahrt', (istFahrt) => {
 	console.log(istFahrt)
 })
 ```
+
+> [!WARNING]
+> Currently, `vdv-453-client` has some shortcomings in the handling of subscriptions; For example, it does not persist the information about its subscriptions, and it does not respond to the server with its active subscriptions (`AktiveAbos`) when asked. Refer to the [tracking Issue #3](https://github.com/OpenDataVBB/vdv-453-client/issues/3) for more details.
 
 
 ## Related
