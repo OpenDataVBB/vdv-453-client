@@ -17,12 +17,12 @@
 		"transit"
 	],
 	"author": "Jannis R <mail@jannisr.de>",
-	"homepage": "https://github.com/derhuerst/vdv-453-client",
+	"homepage": "https://github.com/OpenDataVBB/vdv-453-client",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/derhuerst/vdv-453-client.git"
+		"url": "git+https://github.com/OpenDataVBB/vdv-453-client.git"
 	},
-	"bugs": "https://github.com/derhuerst/vdv-453-client/issues",
+	"bugs": "https://github.com/OpenDataVBB/vdv-453-client/issues",
 	"license": "ISC",
 	"engines": {
 		"node": ">=20"
