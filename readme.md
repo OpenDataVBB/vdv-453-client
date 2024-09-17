@@ -14,6 +14,9 @@ The VDV-453 spec defines the basic protocol that client (usually the data consum
 
 On top of VDV-453, VDV-454 defines two additional services: `REF-AUS` for the exchange of daily schedule data, and `AUS` for realtime data like prognosed delays & cancellations.
 
+This client has been written specifically for [VBB](https://en.wikipedia.org/wiki/Verkehrsverbund_Berlin-Brandenburg)'s *Datendrehscheibe*. However, we're open to changes that make `vdv-453-client` compatible with other VDV-453/-454 systems.
+
+
 ## Installation
 
 ```shell
@@ -57,7 +60,7 @@ const ENDPOINT = 'http://vdv-api.example.org/'
 >
 > Die Statusabfrage dient dem Feststellen der Verfügbarkeit von Diensten. Dazu werden zwei spezielle Informationskanäle verwendet (Ziel-URL `status.xml`, `clientstatus.xml`), die jeder Dienst bereitstellen muss.
 
-We strongly recommend you to follow the spec and allow such incoming requests!
+With VBB's system, we have not observed the server to ever ping or notify the client. Nonetheless, we strongly recommend you to follow the spec and allow such incoming requests!
 
 ### configuring the client
 
