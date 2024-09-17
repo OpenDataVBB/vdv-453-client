@@ -44,7 +44,7 @@ const {
 	endpoint: '…', // HTTP(s) URL
 })
 
-// start HTTP server
+// createClient() returns an HTTP server, which you still need to call listen() on.
 await new Promise((resolve, reject) => {
 	httpServer.listen(3000, (err) => {
 		if (err) reject(err)
@@ -52,23 +52,30 @@ await new Promise((resolve, reject) => {
 	})
 })
 
-// subscribe to VDV-453 DFI service
-const {aboId: dfiAboId} = await dfiSubscribe()
-data.on('dfi:AZBNachricht', (azbNachricht) => console.log(azbNachricht))
-
-// subscribe to VDV-454 AUS service
-const {aboId: ausAboId} = await ausSubscribe()
-data.on('aus:IstFahrt', (istFahrt) => console.log(istFahrt))
-
+const unsubscribeTasks = []
 process.once('SIGINT', {
-	Promise.all([
-		dfiUnsubscribe(dfiAboId),
-		ausUnsubscribe(ausAboId),
-	])
+	Promise.all(unsubscribeTasks.map(task => task()))
 	.then(() => {
 		httpServer.close()
 	})
-	.catch(abortWithError)
+	.catch((err) => {
+		console.error(err)
+		process.exit(1)
+	})
+})
+
+// subscribe to VDV-453 DFI service
+const {aboId: dfiAboId} = await dfiSubscribe()
+unsubscribeTasks.push(() => dfiUnsubscribe(dfiAboId))
+data.on('dfi:AZBNachricht', (azbNachricht) => {
+	console.log(azbNachricht)
+})
+
+// subscribe to VDV-454 AUS service
+const {aboId: ausAboId} = await ausSubscribe()
+unsubscribeTasks.push(() => ausUnsubscribe(ausAboId))
+data.on('aus:IstFahrt', (istFahrt) => {
+	console.log(istFahrt)
 })
 ```
 
