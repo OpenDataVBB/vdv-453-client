@@ -2,6 +2,8 @@
 
 **A client for realtime public transport data systems following the [VDV-453 v2.3.2b](https://web.archive.org/web/20231208122259/https://www.vdv.de/453v2.3.2-sds.pdf.pdfx?forced=false)/[VDV-454 v1.2.2](https://web.archive.org/web/20231208122259/https://www.vdv.de/454v1.2.2-sds.pdf.pdfx?forced=false) specs** (from 2013). Such systems are widespread in Germany, being the realtime data backends (*Datendrehscheiben*) of many regional transit authorities/associations.
 
+`vdv-453-client` is a library only, intended to be embedded into other tools (e.g. [vdv-453-nats-adapter](https://github.com/OpenDataVBB/vdv-453-nats-adapter)). It subscribes to services (see below), fetches the XML data, converts it to JSON, and emits it via an [event](https://nodejs.org/docs/latest-v20.x/api/events.html).
+
 > [!NOTE]
 > This client supports neither the latest 2.x spec versions ([VDV-453 v2.6.1](https://www.vdv.de/vdv-schrift-453-v2.6.1-de.pdfx?forced=true)/[VDV-454 v2.2.1](https://www.vdv.de/454v2.2.1-sd.pdfx?forced=true)) nor the latest 3.x spec versions ([VDV-453 v3.0](https://www.vdv.de/downloads/4337/453v3.0%20SDS/forced)/[VDV-454 v3.0](https://www.vdv.de/downloads/4336/454v3.0%20SDS/forced)). Refer to the [tracking Issue #2](https://github.com/OpenDataVBB/vdv-453-client/issues/2).
 
@@ -24,7 +26,7 @@ npm install OpenDataVBB/vdv-453-client
 ```
 
 
-## Usage
+## Getting Started
 
 > [!IMPORTANT]
 > While `vdv-453-client` is used in a production system at VBB, it hasn't been tested with other VDV-453/-454 systems.
@@ -143,6 +145,239 @@ data.on('aus:IstFahrt', (istFahrt) => {
 
 > [!WARNING]
 > Currently, `vdv-453-client` has some shortcomings in the handling of subscriptions; For example, it does not persist the information about its subscriptions, and it does not respond to the server with its active subscriptions (`AktiveAbos`) when asked. Refer to the [tracking Issue #3](https://github.com/OpenDataVBB/vdv-453-client/issues/3) for more details.
+
+
+## API
+
+> [!TIP]
+> The `REF-AUS` & `AUS` services are defined in VDV-454. All other services are defined in VDV-453.
+
+A client instance can be created by calling `createClient()`, which returns an object with the following fields.
+
+### `client.httpServer`
+
+The client HTTP server (see section above), an [`http.Server`](https://nodejs.org/docs/latest-v20.x/api/http.html#class-httpserver) that you still need to call `listen()` on.
+
+### `client.data`
+
+An [`EventEmitter`](https://nodejs.org/docs/latest-v20.x/api/events.html#class-eventemitter) that will emit `${service}:${rootSubTag}`, where `service` & `rootSubTag` depend on the service that you subscribe on.
+
+> [!NOTE]
+> The arguments of the events below, unless otherwise noted, are JSON equivalents of the XML trees sent by the server (see the [*XML to JSON mapping* section](#xml-to-json-mapping)).
+
+#### event `aus:IstFahrt`
+
+Arguments:
+1. `istFahrt` – The `AUS` `IstFahrt`.
+
+#### event `raw:dfi:AZBNachricht`
+
+Arguments:
+1. `azbNachricht` – The whole `DFI` `AZBNachricht`, usually containing many `AZBFahrplanlage`s, `AZBFahrtLoeschen`s, etc.
+
+#### event `raw:aus:AUSNachricht`
+
+Arguments:
+1. `ausNachricht` – The whole `AUS` `AUSNachricht`, usually containing many `IstFahrt`s.
+
+### `client.dfiSubscribe()`
+
+`dfiSubscribe(azbId, opt = {})` is an async function that takes the following arguments:
+
+1. `azbId`: The ID of a `DFI` *Anzeigerbereich*, a.k.a. a stop or station.
+2. `opt` (optional): An object whose fields override the following defaults:
+	- `expiresAt`: `Date.now() + DFI_DEFAULT_SUBSCRIPTION_TTL`,
+	- `linienId`: `null`,
+	- `richtungsId`: `null`,
+	- `vorschauzeit`: `10` (in minutes)
+	- `hysterese`: `1` (in seconds)
+	- `fetchInterval`: `30_000` (in milliseconds)
+
+After subscribing successfully, it will return an object with the following fields:
+
+- `aboId`: The ID that represents the subscription. It can be used to unsubscribe.
+
+### `client.dfiFetchData()`
+
+`dfiFetchData(opt = {})` is an async function that takes the following arguments:
+
+1. `opt` (optional): An object whose fields override the following defaults:
+	- `abortController`: *inactive `AbortController`* – Pass in your own to be able to [`.abort()`](https://nodejs.org/docs/latest-v20.x/api/globals.html#abortcontrollerabortreason) the fetching.
+
+### `client.dfiUnsubscribe()`
+
+`dfiUnsubscribe(...aboIds)` is an async function that takes the following arguments:
+
+1. `aboIds`: >0 subscription IDs.
+
+### `client.dfiUnsubscribeAll()`
+
+`dfiUnsubscribeAll()` is an async function that 0 arguments. It unsubscribes from all active `DFI` subscriptions the server knows about.
+
+### `client.ausSubscribe()`
+
+`ausSubscribe(opt = {})` is an async function that takes the following arguments:
+
+1. `opt` (optional): An object whose fields override the following defaults:
+	- `expiresAt`: `Date.now() + AUS_DEFAULT_SUBSCRIPTION_TTL`,
+	- `vorschauzeit`: `10` (in minutes)
+	- `hysterese`: `60` (in seconds)
+	- `fetchInterval`: `30_000` (in milliseconds)
+
+After subscribing successfully, it will return an object with the following fields:
+
+- `aboId`: The ID that represents the subscription. It can be used to unsubscribe.
+
+### `client.ausFetchData()`
+
+Works like `client.dfiFetchData()`, except for `AUS`.
+
+### `client.ausUnsubscribe()`
+
+Works like `client.dfiUnsubscribe()`, except for `AUS`.
+
+### `client.ausUnsubscribeAll()`
+
+Works like `client.dfiUnsubscribeAll()`, except for `AUS`.
+
+### error handling
+
+The functions in `client` may reject with the following errors:
+- `Vdv453HttpError` – The server has rejected the client's HTTP request, e.g. because it is malformed, or because the server is overloaded.
+- `Vdv453ApiError` – The server has accepted the client's HTTP request but signaled that it couldn't process it, e.g. because a subscription filter is not valid.
+- `Error` – A generic error thrown in some cases.
+
+### XML to JSON mapping
+
+`vdv-453-client` uses [`xml-stream-saxes`](https://npmjs.com/package/xml-stream-saxes) to parse XML into JavaScript/JSON trees.
+
+For example, the following (simplified) XML `IstFahrt`:
+
+```xml
+<IstFahrt Zst="2024-04-11T09:10:11Z">
+	<LinienID>M8</LinienID>
+	<Komplettfahrt>false</Komplettfahrt>
+	<IstHalt>
+		<HaltID>ODEG_900170006</HaltID>
+		<Abfahrtszeit>2024-04-11T11:52:00Z</Abfahrtszeit>
+	</IstHalt>
+	<IstHalt>
+		<HaltID>ODEG_900171517</HaltID>
+		<Abfahrtszeit>2024-04-11T12:07:00Z</Abfahrtszeit>
+	</IstHalt>
+</IstFahrt>
+```
+
+into the following JSON tree.
+
+```js
+{
+	'$name': 'IstFahrt',
+	'$': {
+		Zst: '2024-04-11T09:10:11Z',
+	},
+	'$children': [
+		{
+			'$name': 'LinienID',
+			'$text': 'M8',
+			'$children': ['M8'],
+		},
+		{
+			'$name': 'Komplettfahrt',
+			'$text': 'false',
+			'$children': ['false'],
+		},
+		{
+			'$name': 'IstHalt',
+			'$children': [
+				{
+					'$name': 'HaltID',
+					'$text': 'ODEG_900170006',
+					'$children': ['ODEG_900170006'],
+				},
+				{
+					'$name': 'Abfahrtszeit',
+					'$text': '2024-04-11T11:52:00Z',
+					'$children': ['2024-04-11T11:52:00Z'],
+				}
+			],
+			HaltID: {
+				'$name': 'HaltID',
+				'$text': 'ODEG_900170006',
+				'$children': ['ODEG_900170006'],
+			},
+			Abfahrtszeit: {
+				'$name': 'Abfahrtszeit',
+				'$text': '2024-04-11T11:52:00Z',
+				'$children': ['2024-04-11T11:52:00Z'],
+			},
+		},
+		{
+			'$name': 'IstHalt',
+			'$children': [
+				{
+					'$name': 'HaltID',
+					'$text': 'ODEG_900171517',
+					'$children': ['ODEG_900171517'],
+				},
+				{
+					'$name': 'Abfahrtszeit',
+					'$text': '2024-04-11T12:07:00Z',
+					'$children': ['2024-04-11T12:07:00Z'],
+				}
+			],
+			HaltID: {
+				'$name': 'HaltID',
+				'$text': 'ODEG_900171517',
+				'$children': ['ODEG_900171517'],
+			},
+			Abfahrtszeit: {
+				'$name': 'Abfahrtszeit',
+				'$text': '2024-04-11T12:07:00Z',
+				'$children': ['2024-04-11T12:07:00Z'],
+			},
+		}
+	],
+	LinienID: {
+		'$name': 'LinienID',
+		'$text': 'M8',
+		'$children': ['M8'],
+	},
+	Komplettfahrt: {
+		'$name': 'Komplettfahrt',
+		'$text': 'false',
+		'$children': ['false'],
+	},
+	IstHalt: {
+		'$name': 'IstHalt',,
+		'$children': [
+			{
+				'$name': 'HaltID',
+				'$text': 'ODEG_900171517',
+				'$children': ['ODEG_900171517'],
+			},
+			{
+				'$name': 'Abfahrtszeit',
+				'$text': '2024-04-11T12:07:00Z',
+				'$children': ['2024-04-11T12:07:00Z'],
+			}
+		],
+		HaltID: {
+			'$name': 'HaltID',
+			'$text': 'ODEG_900171517',
+			'$children': ['ODEG_900171517'],
+		},
+		Abfahrtszeit: {
+			'$name': 'Abfahrtszeit',
+			'$text': '2024-04-11T12:07:00Z',
+			'$children': ['2024-04-11T12:07:00Z'],
+		},
+	},
+}
+```
+
+> [!WARNING] Among all children of a node, the last of each kind (`$name`) will also be exposed on the node as `node[child.$name]` (e.g. `LinienID` above).
+> Because you usually can't predict the number of children in a node for sure (nor the order), we recommend to always iterate over `$children` and only use the "direct" named properties if you know what you're doing.
 
 
 ## Related
