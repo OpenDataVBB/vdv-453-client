@@ -1,28 +1,28 @@
 # vdv-453-client
 
-**A client for realtime public transport data systems following the [VDV-453 v2.3.2b](https://web.archive.org/web/20231208122259/https://www.vdv.de/453v2.3.2-sds.pdf.pdfx?forced=false)/[VDV-454 v1.2.2](https://web.archive.org/web/20231208122259/https://www.vdv.de/454v1.2.2-sds.pdf.pdfx?forced=false) specs** (from 2013). Such systems are widespread in Germany, being the realtime data backends (*Datendrehscheiben*) of many regional transit authorities/associations.
-
-`vdv-453-client` is a library only, intended to be embedded into other tools (e.g. [vdv-453-nats-adapter](https://github.com/OpenDataVBB/vdv-453-nats-adapter)). It subscribes to services (see below), fetches the XML data, converts it to JSON, and emits it via an [event](https://nodejs.org/docs/latest-v20.x/api/events.html).
-
-> [!NOTE]
-> This client supports neither the latest 2.x spec versions ([VDV-453 v2.6.1](https://www.vdv.de/vdv-schrift-453-v2.6.1-de.pdfx?forced=true)/[VDV-454 v2.2.1](https://www.vdv.de/454v2.2.1-sd.pdfx?forced=true)) nor the latest 3.x spec versions ([VDV-453 v3.0](https://www.vdv.de/downloads/4337/453v3.0%20SDS/forced)/[VDV-454 v3.0](https://www.vdv.de/downloads/4336/454v3.0%20SDS/forced)). Refer to the [tracking Issue #2](https://github.com/OpenDataVBB/vdv-453-client/issues/2).
+A JavaScript **client for realtime public transport data systems following the [VDV-453 v2.3.2b](https://web.archive.org/web/20231208122259/https://www.vdv.de/453v2.3.2-sds.pdf.pdfx?forced=false)/[VDV-454 v1.2.2](https://web.archive.org/web/20231208122259/https://www.vdv.de/454v1.2.2-sds.pdf.pdfx?forced=false) specs** (from 2013). Such systems are widespread in Germany, being the realtime data backends (*Datendrehscheiben*) of many regional transit authorities/associations.
 
 [![npm version](https://img.shields.io/npm/v/vdv-453-client.svg)](https://www.npmjs.com/package/vdv-453-client)
 ![ISC-licensed](https://img.shields.io/github/license/OpenDataVBB/vdv-453-client.svg)
 ![minimum Node.js version](https://img.shields.io/node/v/vdv-453-client.svg)
 [![chat with me on Twitter](https://img.shields.io/badge/chat%20with%20me-on%20Twitter-1da1f2.svg)](https://twitter.com/derhuerst)
 
-The VDV-453 spec defines the basic protocol that client (usually the data consumer) and server (usually the provider) use to communicate; It uses HTTP `POST` requests with XML bodies. VDV-453 also defines some (domain-specific) *services* on top, e.g. `DFI` for fetching departures at stops/stations. The client subscribes to such services, optionally with service-specific parameters, e.g. filters to reduce the number of subscribed items.
+`vdv-453-client` is a library only, intended to be embedded into other tools (e.g. [vdv-453-nats-adapter](https://github.com/OpenDataVBB/vdv-453-nats-adapter)). It subscribes to services (see below), fetches the XML data, converts it to JSON, and emits it via an [event](https://nodejs.org/docs/latest-v20.x/api/events.html).
+
+> [!NOTE]
+> This client supports neither the latest 2.x spec versions ([VDV-453 v2.6.1](https://www.vdv.de/vdv-schrift-453-v2.6.1-de.pdfx?forced=true)/[VDV-454 v2.2.1](https://www.vdv.de/454v2.2.1-sd.pdfx?forced=true)) nor the latest 3.x spec versions ([VDV-453 v3.0](https://www.vdv.de/downloads/4337/453v3.0%20SDS/forced)/[VDV-454 v3.0](https://www.vdv.de/downloads/4336/454v3.0%20SDS/forced)). Refer to the [tracking Issue #2](https://github.com/OpenDataVBB/vdv-453-client/issues/2).
+
+The VDV-453 spec defines the basic protocol that client (usually the data consumer) and server (usually the provider) use to communicate; It uses HTTP `POST` requests with XML bodies. VDV-453 also defines some (domain-specific) *services* on top, e.g. `DFI` for fetching departures at stops/stations. A client subscribes to such services, optionally with service-specific parameters, e.g. filters to reduce the number of subscribed items.
 
 On top of VDV-453, VDV-454 defines two additional services: `REF-AUS` for the exchange of daily schedule data, and `AUS` for realtime data like prognosed delays & cancellations.
 
-This client has been written specifically for [VBB](https://en.wikipedia.org/wiki/Verkehrsverbund_Berlin-Brandenburg)'s *Datendrehscheibe*. However, we're open to changes that make `vdv-453-client` compatible with other VDV-453/-454 systems.
+`vdv-453-client` has been written specifically for [VBB](https://en.wikipedia.org/wiki/Verkehrsverbund_Berlin-Brandenburg)'s *Datendrehscheibe*. However, we're open to changes that make `vdv-453-client` compatible with other VDV-453/-454 systems.
 
 
 ## Installation
 
 ```shell
-npm install OpenDataVBB/vdv-453-client
+npm install vdv-453-client
 ```
 
 
@@ -30,6 +30,7 @@ npm install OpenDataVBB/vdv-453-client
 
 > [!IMPORTANT]
 > While `vdv-453-client` is used in a production system at VBB, it hasn't been tested with other VDV-453/-454 systems.
+> Also, there's [tracking issue #1 regarding automated tests](https://github.com/OpenDataVBB/vdv-453-client/issues/1).
 
 ### Leitstellenkennung
 
@@ -53,7 +54,7 @@ const ENDPOINT = 'http://vdv-api.example.org/'
 
 ### local HTTP server
 
-> ![NOTE]
+> [!NOTE]
 > The VDV-453 spec expects the *client* (consumer) to listen for HTTP requests from the *server* (provider), in order to allow the server to notify the client when new data is available, sort of like a [webhook](https://en.wikipedia.org/wiki/Webhook).
 > This means that your client's machine will have to have an open TCP port! Once you have chosen your client's port, it needs to be configured on the server side.
 

@@ -79,8 +79,8 @@ const SECOND = 1000
 const MINUTE = 60 * SECOND
 const HOUR = 60 * MINUTE
 
-const DFI_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR,
-const AUS_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR,
+const DFI_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
+const AUS_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
 
 const waitFor = async (ms, abortSignal) => {
 	await new Promise((resolve) => {
@@ -451,6 +451,7 @@ const createClient = (cfg, opt = {}) => {
 			abortController,
 		} = opt
 		if (recursionLevel >= DATEN_ABRUFEN_MAX_RECURSIONS) {
+			// todo: throw more specific error?
 			const err = new Error(`${service}: too many recursions while fetching data`)
 			err.service = service
 			err.datensatzAlle = datensatzAlle
