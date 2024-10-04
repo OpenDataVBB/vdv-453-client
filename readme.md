@@ -72,8 +72,6 @@ const ENDPOINT = 'http://vdv-api.example.org/'
 >
 > Die Statusabfrage dient dem Feststellen der Verfügbarkeit von Diensten. Dazu werden zwei spezielle Informationskanäle verwendet (Ziel-URL `status.xml`, `clientstatus.xml`), die jeder Dienst bereitstellen muss.
 
-With VBB's system, we have not observed the server to ever ping or notify the client. Nonetheless, we strongly recommend you to follow the spec and allow such incoming requests!
-
 ### configuring the client
 
 ```js
