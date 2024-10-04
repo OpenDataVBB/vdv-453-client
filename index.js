@@ -102,9 +102,12 @@ const waitFor = async (ms, abortSignal) => {
 const createClient = (cfg, opt = {}) => {
 	const {
 		leitstelle,
+		theirLeitstelle,
 	} = cfg
 	strictEqual(typeof leitstelle, 'string', 'cfg.leitstelle must be a string')
 	ok(leitstelle, 'cfg.leitstelle must not be empty')
+	strictEqual(typeof theirLeitstelle, 'string', 'cfg.theirLeitstelle must be a string')
+	ok(theirLeitstelle, 'cfg.theirLeitstelle must not be empty')
 
 	const {
 		logger,
@@ -164,7 +167,11 @@ const createClient = (cfg, opt = {}) => {
 
 	// todo: move to lib/server.js?
 	const _onRequest = (service, call, handleRequest) => {
-		const path = '/' + [leitstelle, service, call].map(part => encodeURIComponent(part)).join('/')
+		const path = '/' + [
+			theirLeitstelle,
+			service,
+			call,
+		].map(part => encodeURIComponent(part)).join('/')
 		// todo: debug-log
 		router.post(path, async (req, res, next) => {
 			try {

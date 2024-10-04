@@ -10,6 +10,10 @@ if (!process.env.VDV_453_LEITSTELLE) {
 	abortWithError('missing/empty $VDV_453_LEITSTELLE')
 }
 const LEITSTELLE = process.env.VDV_453_LEITSTELLE
+if (!process.env.VDV_453_THEIR_LEITSTELLE) {
+	abortWithError('missing/empty $VDV_453_THEIR_LEITSTELLE')
+}
+const THEIR_LEITSTELLE = process.env.VDV_453_THEIR_LEITSTELLE
 if (!process.env.VDV_453_ENDPOINT) {
 	abortWithError('missing/empty $VDV_453_ENDPOINT')
 }
@@ -27,6 +31,7 @@ const {
 	ausUnsubscribe,
 } = createClient({
 	leitstelle: LEITSTELLE,
+	theirLeitstelle: THEIR_LEITSTELLE,
 	endpoint: ENDPOINT,
 })
 

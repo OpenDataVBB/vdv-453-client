@@ -44,6 +44,12 @@ With the organisation providing the VDV 453 API, you will have to agree upon you
 const LEITSTELLE = 'MY_VDV_CLIENT'
 ```
 
+You will also have to configure their *Leitstellenkennung*, which they use for calls to your client.
+
+```js
+const THEIR_LEITSTELLE = 'SOME_VDV_API'
+```
+
 ### server address
 
 We configure the server's address. It needs to be the HTTP(S) base URL *without* your *Leitstellenkennung*.
@@ -82,6 +88,7 @@ const {
 	ausUnsubscribe,
 } = createVdv453Client({
 	leitstelle: LEITSTELLE,
+	theirLeitstelle: THEIR_LEITSTELLE,
 	endpoint: ENDPOINT,
 })
 
