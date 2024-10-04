@@ -33,8 +33,16 @@ const {
 await promisify(httpServer.listen.bind(httpServer))(PORT)
 logger.info(`listening on port ${PORT}`)
 
+const expiresAt = process.env.AUS_EXPIRES_AT
+	? parseInt(process.env.AUS_EXPIRES_AT) * 1000
+	: Date.now() + 10 * 60 * 1000 // in 10 minutes
+const fetchInterval = process.env.AUS_FETCH_INTERVAL
+	? parseInt(process.env.AUS_FETCH_INTERVAL) * 1000
+	: 30_000 // 30 seconds
+
 const {aboId} = await ausSubscribe({
-	expiresAt: Date.now() + 10 * 60 * 1000, // for 10min
+	expiresAt,
+	fetchInterval,
 })
 process.on('SIGINT', () => {
 	ausUnsubscribe(aboId)
