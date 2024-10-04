@@ -408,7 +408,7 @@ const createClient = (cfg, opt = {}) => {
 			}
 
 			if (subscriptions[service].size === 0) { // 0 subscriptions on `service`
-				logger.warn(logCtx, 'received datenBereitAnfrage, even though we don\'t know about a subscription')
+				logger.warn(logCtx, 'received DatenBereitAnfrage, even though we don\'t know about a subscription')
 				res.respondWithResponse({
 					ok: false,
 					bestaetigung: true, // send Bestaetigung element
@@ -416,9 +416,9 @@ const createClient = (cfg, opt = {}) => {
 				return;
 			}
 
-			const datenBereitAnfrage = await req.parseWholeRoot('datenBereitAnfrage')
+			const datenBereitAnfrage = await req.parseWholeRoot('DatenBereitAnfrage')
 			logCtx.datenBereitAnfrage = datenBereitAnfrage
-			logger.debug(logCtx, 'received datenBereitAnfrage')
+			logger.debug(logCtx, 'received DatenBereitAnfrage')
 
 			res.respondWithResponse({
 				ok: true,
