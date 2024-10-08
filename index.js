@@ -79,6 +79,10 @@ const SECOND = 1000
 const MINUTE = 60 * SECOND
 const HOUR = 60 * MINUTE
 
+// > When delay is larger than 2147483647 or less than 1, the delay will be set to 1. Non-integer delays are truncated to an integer.
+// https://nodejs.org/docs/latest-v20.x/api/timers.html#settimeoutcallback-delay-args
+const SETTIMEOUT_MAX_DELAY = 2147483647
+
 const DFI_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
 const AUS_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
 
@@ -283,6 +287,10 @@ const createClient = (cfg, opt = {}) => {
 		const aboSubTag = ABO_ANFRAGE_ROOT_SUB_TAGS_BY_SERVICE.get(service)
 		// todo: handle BigInt?
 		ok(Number.isInteger(expiresAt), 'expiresAt must be a UNIX timestamp')
+		// todo: what if the server has a different date/time configured?
+		const expiresIn = expiresAt - Date.now()
+		// todo: consider using e.g. https://github.com/trs/set-long-timeout/issues/2#issue-1912020818 here?
+		ok(expiresIn <= SETTIMEOUT_MAX_DELAY, `expiresAt must not be greater than ${SETTIMEOUT_MAX_DELAY}`)
 
 		const aboId = getNextAboId()
 		const logCtx = {
