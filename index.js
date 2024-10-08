@@ -289,6 +289,7 @@ const createClient = (cfg, opt = {}) => {
 		ok(Number.isInteger(expiresAt), 'expiresAt must be a UNIX timestamp')
 		// todo: what if the server has a different date/time configured?
 		const expiresIn = expiresAt - Date.now()
+		ok(expiresIn > 0, 'expiresAt must be in the future')
 		// todo: consider using e.g. https://github.com/trs/set-long-timeout/issues/2#issue-1912020818 here?
 		ok(expiresIn <= SETTIMEOUT_MAX_DELAY, `expiresAt must not be greater than ${SETTIMEOUT_MAX_DELAY}`)
 
