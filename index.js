@@ -127,7 +127,8 @@ const createClient = (cfg, opt = {}) => {
 			// - serverResponse.client
 			// - serverResponse.req
 		}),
-		// The VBB VDV-453 system doesn't seem to notify us about new/changed data (see _handleDatenBereitAnfrage), so we fetch the data "manually" periodically.
+		// Some VDV-453 systems may not notify us about new/changed data (see _handleDatenBereitAnfrage), so we fetch the data "manually" periodically.
+		// todo [breaking]: default to false
 		fetchSubscriptionsDataPeriodically: true,
 		...opt,
 	}
@@ -407,7 +408,6 @@ const createClient = (cfg, opt = {}) => {
 	// The server should notify the client of new/changed data, so that the latter can then request it.
 	// > 5.1.3.1 Datenbereitstellung signalisieren (DatenBereitAnfrage)
 	// > Ist das Abonnement eingerichtet und sind die Daten bereitgestellt, wird der Datenkonsument durch eine DatenBereitAnfrage über das Vorhandensein aktualisierter Daten informiert. Dies geschieht bei jeder Änderung der Daten die dem Abonnement zugeordnet sind. Die Signalisierung bezieht sich auf alle Abonnements eines Dienstes.
-	// Note: In practice, with the VBB system, this doesn't seem to happen.
 	const _handleDatenBereitAnfrage = (service, onDatenBereit) => {
 		_onRequest(service, DATEN_BEREIT, async (req, res) => {
 			const logCtx = {
