@@ -161,7 +161,7 @@ const createClient = (cfg, opt = {}) => {
 	// > Eine AboID ist innerhalb eines jeden Dienstes eindeutig.
 	const getNextAboId = () => String(10000 + Math.round(Math.random() * 9999))
 	// todo: "Wird eine AboAnfrage mit einer AboID gestellt und es existiert bereits ein Abonnement unter dieser Bezeichnung, so wird das bestehende Abonnement überschrieben." – warn about this? does it apply across services?
-	// todo: persist AboIDs across client restarts, reinstate fetch timers after restarts?
+	// todo: persist AboIDs across client restarts, reinstate fetch timers after restarts? – transactions (or locking as a fallback) will be necessary to guarantee consistent client behaviour (start transaction, set up subscription, upon success persist AboId, commit transaction)
 	// service -> AboID -> subscriptionAbortController
 	const subscriptions = Object.fromEntries(
 		SERVICES.map(svc => [svc, new Map()]),
@@ -247,8 +247,9 @@ const createClient = (cfg, opt = {}) => {
 			// todo: otherwise warn-log unexpected tag?
 		}
 	}
-	// todo: send StatusAnfrage periodically, to detect server hiccups
+	// todo: send StatusAnfrage periodically, to detect client & server hiccups
 	// > Verliert der Server seine Abonnement-Daten, so ist dies zunächst vom Client aus nicht fest- stellbar. DatenBereitAnfragen bleiben zwar aus, aber dies kann nicht vom normalen Betrieb unterschieden und somit der Absturz des Servers nicht festgestellt werden. Um diesen Fall zu erkennen, sind zusätzliche, zyklische Anfragen vom Typ StatusAnfrage (5.1.8.1) zum Server zu senden. Innerhalb der StatusAntwort (5.1.8.2) gibt der Server den Zeitstempel des Dienststarts an. Fand der Dienststart nach der Einrichtung der Abonnements statt, so muss vom Verlust der Abonnements ausgegangen werden. Es ist nun zu verfahren wie beim Client-Datenverlust: Löschen und Neueinrichtung aller Abonnements.
+	// todo: what happens if the client discovers that the server has active subscriptions that the client doesn't know about? if the client is the single instance subscribing, it should provide a way to delete such stale/"stray" subscriptions
 
 	// ----------------------------------
 
@@ -663,8 +664,18 @@ const createClient = (cfg, opt = {}) => {
 			// linienId: null,
 			// richtungsId: null,
 			vorschauzeit: 10, // minutes
+			// VDV-454 spec v2.2.1 says:
+			// > 5.2.1 Ist-Daten Anfrage (AboAUS)
+			// > […]
+			// > Schwellwert in Sekunden, ab dem Abweichungen vom Soll-Fahrplan bzw. von der letzten Meldung übertragen werden sollen (s. 6.1.8).
+			// > Die Abweichung muss größer oder gleich dem angegebenen Wert sein, damit Abweichungen übertragen werden.
+			// > […]
+			// > 6.1.8 Zeitliches Meldeverhalten - Hysterese
+			// > […]
+			// > Das zeitliche Meldeverhalten bei Fahrtverspätungen ist dagegen relativ zur letzten Meldung in Form einer Hysteresefunktion festgelegt: Sobald sich eine Verspätungsprognose einer Haltestelle gegenüber dem letzten übermittelten Wert um die abonnierte Hysterese (oder mehr) nach oben oder unten verändert, setzt das ITCS eine Ist-Meldung an das Auskunftssystem ab, welche die alten Werte überschreibt.
 			// The VBB VDV-453 server reports:
 			// > Die Hysterese des Lieferanten "VBB DDS" ist 60 Sekunden […].
+			// todo: does a lower value work too? nowadays many clients would be interested in delays <60s...
 			hysterese: 60, // seconds
 			fetchInterval: 30_000, // 30s
 			...opt,
