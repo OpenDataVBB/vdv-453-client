@@ -22,7 +22,7 @@ test('XML parsing works', async (t) => {
 	])
 
 	const els = []
-	for await (const [_, el] of parser) {
+	for await (const el of parser) {
 		els.push(el)
 	}
 

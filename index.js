@@ -233,7 +233,8 @@ const createClient = (cfg, opt = {}) => {
 			// todo: move "StatusAntwort" into constant?
 			{tag: 'StatusAntwort', preserve: true},
 		])
-		for await (const [tag, el] of tags) {
+		for await (const el of tags) {
+			const tag = el.$name
 			if (tag === 'StatusAntwort') {
 				assertStatusAntwortOk(el)
 
@@ -267,7 +268,8 @@ const createClient = (cfg, opt = {}) => {
 		const tags = parseResponse([
 			{tag: BESTAETIGUNG, preserve: true},
 		])
-		for await (const [tag, el] of tags) {
+		for await (const el of tags) {
+			const tag = el.$name
 			if (tag === BESTAETIGUNG) {
 				assertBestaetigungOk(el)
 				// todo: warn if DatenGueltigBis < aboParams.VerfallZst?
@@ -520,7 +522,7 @@ const createClient = (cfg, opt = {}) => {
 		const ctx = {
 			zst: null,
 		}
-		for await (const [tag, el] of tags) {
+		for await (const el of tags) {
 			if (abortController.signal.aborted) {
 				logger.debug({
 					...logCtx,
@@ -529,6 +531,7 @@ const createClient = (cfg, opt = {}) => {
 				return;
 			}
 
+			const tag = el.$name
 			if (tag === BESTAETIGUNG) {
 				assertBestaetigungOk(el)
 				logCtx.bestaetigung = el
