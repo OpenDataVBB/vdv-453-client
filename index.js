@@ -458,26 +458,25 @@ const createClient = (cfg, opt = {}) => {
 	// > 5.1.4.1 Datenübertragung anfordern (DatenAbrufenAnfrage)
 	// > Wurde bereits eine DatenAbrufenAnfrage vom Client an den Server versandt, so ist für diese vom Client eine DatenAbrufenAntwort abzuwarten (Antwort, oder Timeout), bevor erneut eine DatenAbrufenAnfrage versandt wird. Es wird daher empfohlen keine weitere DatenAbrufenAnfrage zu stellen, solange noch eine DatenAbrufenAnfrage aktiv ist.
 	const WEITERE_DATEN = 'WeitereDaten'
-	// todo: rename to `DATEN_ABRUFEN_MAX_ITERATIONS`
-	const DATEN_ABRUFEN_MAX_RECURSIONS = 300
+	const DATEN_ABRUFEN_MAX_ITERATIONS = 300
 
 	// We need to fetch data in >1 pages. For better consumer ergonomics, we expose it as *one* async iterable. We also want to process each response's body iteratively. Effectively, by using async iteration, we signal "backpressure" to the response parsing code.
 	// However, `yield*` (and the non-async-iterable `await`) with recursive function calls prevents Node.js from garbage-collecting allocations of the caller. [0]
 	// This is why we use a trampoline [1] with no state here. Because we use `yield*`, we cannot use the (inner function's) return value to signal if iteration/recursion should continue, so we use an object instead.
 	// [0] https://medium.com/@RomarioDiaz25/the-problem-with-infinite-recursive-promise-resolution-chains-af5b97712661
 	// [1] https://stackoverflow.com/a/489860/1072129
-	const _sendDatenAbrufenAnfrage = async function* (service, opt) {
-		let recursionLevel = 0
-		const recursionControl = {
+	const _fetchData = async function* (service, opt) {
+		let itLevel = 0
+		const itControl = {
 			continue: false,
 		}
 		while (true) {
-			recursionControl.continue = false
-			yield* _sendDatenAbrufenAnfrageInner(service, opt, recursionLevel++, recursionControl)
-			if (recursionControl.continue !== true) break
+			itControl.continue = false
+			yield* _sendDatenAbrufenAnfrage(service, opt, itLevel++, itControl)
+			if (itControl.continue !== true) break
 		}
 	}
-	const _sendDatenAbrufenAnfrageInner = async function* (service, opt, recursionLevel, recursionControl) {
+	const _sendDatenAbrufenAnfrage = async function* (service, opt, itLevel, itControl) {
 		opt = {
 			datensatzAlle: false,
 			abortController: new AbortController(),
@@ -487,14 +486,14 @@ const createClient = (cfg, opt = {}) => {
 			datensatzAlle,
 			abortController,
 		} = opt
-		if (recursionLevel >= DATEN_ABRUFEN_MAX_RECURSIONS) {
+		if (itLevel >= DATEN_ABRUFEN_MAX_ITERATIONS) {
 			// todo: throw more specific error?
 			// todo [breaking]: "recursions" -> "iterations"
 			const err = new Error(`${service}: too many recursions while fetching data`)
 			err.service = service
 			err.datensatzAlle = datensatzAlle
 			// todo [breaking]: rename to `iterations`
-			err.recursions = recursionLevel
+			err.recursions = itLevel
 			throw err
 		}
 
@@ -507,7 +506,7 @@ const createClient = (cfg, opt = {}) => {
 		const logCtx = {
 			service,
 			dataSubTag,
-			recursionLevel,
+			itLevel,
 		}
 		logger.trace(logCtx, 'requesting data')
 
@@ -574,8 +573,8 @@ const createClient = (cfg, opt = {}) => {
 		}
 
 		if (weitereDaten) {
-			logger.debug(logCtx, `received DatenAbrufenAntwort with WeitereDaten=true, recursing (${recursionLevel + 1})`)
-			recursionControl.continue = true
+			logger.debug(logCtx, `received DatenAbrufenAntwort with WeitereDaten=true, iterating further (${itLevel + 1})`)
+			itControl.continue = true
 		}
 	}
 
@@ -638,7 +637,7 @@ const createClient = (cfg, opt = {}) => {
 			abortController,
 		} = cfg
 
-		const els = _sendDatenAbrufenAnfrage(DFI, {
+		const els = _fetchData(DFI, {
 			datensatzAlle,
 			abortController,
 		})
@@ -735,7 +734,7 @@ const createClient = (cfg, opt = {}) => {
 			abortController,
 		} = cfg
 
-		const els = _sendDatenAbrufenAnfrage(AUS, {
+		const els = _fetchData(AUS, {
 			datensatzAlle,
 			abortController,
 		})
