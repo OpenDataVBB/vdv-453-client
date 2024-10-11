@@ -127,7 +127,7 @@ By design, every VDV-453/-454 subscription must have a [TTL](https://en.wikipedi
 >
 > Allen Abonnements aller Dienste wird beim Einrichten ein Verfallszeitstempel (`VerfallZst`) durch den Client mitgegeben. […]
 
-Therefore, when subscribing to a service, the client *must* provide am expiry date+time. Use `opt.expiresAt` to provide a different TTL than `vdv-453-client`'s default of 1 hour.
+Therefore, when subscribing to a service, the client *must* provide an expiration date+time. Use `opt.expiresAt` to provide a different TTL than `vdv-453-client`'s default of 1 hour.
 
 ```js
 // subscribe to VDV-453 DFI service
