@@ -389,6 +389,9 @@ const createClient = (cfg, opt = {}) => {
 
 		for (const aboId of aboIds) {
 			const abortController = subscriptions[service].get(aboId)
+			if (!abortController) {
+				continue
+			}
 			abortController.abort('unsubscribed manually')
 			subscriptions[service].delete(aboId)
 		}
