@@ -322,7 +322,6 @@ const createClient = (cfg, opt = {}) => {
 			service,
 			aboParams,
 		)
-		logCtx.bestaetigung = bestaetigung
 
 		if (fetchSubscriptionsDataPeriodically) {
 			ok(Number.isInteger(fetchInterval), 'fetchInterval must be an integer')
@@ -367,7 +366,10 @@ const createClient = (cfg, opt = {}) => {
 			})
 		}
 
-		logger.debug(logCtx, 'successfully subscribed to items')
+		logger.trace({
+			...logCtx,
+			bestaetigung,
+		}, 'successfully subscribed')
 		return {
 			aboId,
 		}
@@ -595,7 +597,10 @@ const createClient = (cfg, opt = {}) => {
 		}
 
 		if (weitereDaten) {
-			logger.debug(logCtx, `received DatenAbrufenAntwort with WeitereDaten=true, iterating further (${itLevel + 1})`)
+			logger.debug({
+				...logCtx,
+				bestaetigung: undefined,
+			}, `received DatenAbrufenAntwort with WeitereDaten=true, iterating further (${itLevel + 1})`)
 			itControl.continue = true
 		}
 	}
