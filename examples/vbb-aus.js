@@ -28,7 +28,7 @@ const {
 	httpServer,
 	data,
 	ausSubscribe,
-	ausUnsubscribe,
+	unsubscribeAllOwned,
 } = createClient({
 	leitstelle: LEITSTELLE,
 	theirLeitstelle: THEIR_LEITSTELLE,
@@ -50,7 +50,7 @@ const {aboId} = await ausSubscribe({
 	fetchInterval,
 })
 process.on('SIGINT', () => {
-	ausUnsubscribe(aboId)
+	unsubscribeAllOwned()
 	.then(() => {
 		httpServer.close()
 	})

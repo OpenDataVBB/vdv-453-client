@@ -246,6 +246,10 @@ Works like `client.dfiUnsubscribe()`, except for `AUS`.
 
 Works like `client.dfiUnsubscribeAll()`, except for `AUS`.
 
+### `client.unsubscribeAllOwned()`
+
+An async function that will unsubscribe from all (unexpired) subscriptions created using `client`.
+
 ### error handling
 
 The functions in `client` may reject with the following errors:

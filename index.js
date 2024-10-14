@@ -373,19 +373,30 @@ const createClient = (cfg, opt = {}) => {
 		}
 	}
 
-	const _unsubscribe = async (service, aboIds) => {
+	const _unsubscribe = async (service, aboIds, silenceSubscriptionNotFoundError = false) => {
 		const logCtx = {
 			service,
 			aboIds,
 		}
 		logger.debug(logCtx, 'unsubscribing from subscriptions')
 
-		const aboParams = aboIds.map(aboId => x('AboLoeschen', {}, aboId))
-		const bestaetigung = await _sendAboAnfrage(
-			service,
-			aboParams,
-		)
-		logCtx.bestaetigung = bestaetigung
+		try {
+			const aboParams = aboIds.map(aboId => x('AboLoeschen', {}, aboId))
+			const bestaetigung = await _sendAboAnfrage(
+				service,
+				aboParams,
+			)
+			logCtx.bestaetigung = bestaetigung
+		} catch (err) {
+			if (silenceSubscriptionNotFoundError) {
+				const match = /zu löschenden Abonnements (\d+(, \d+)?) wurden nicht gefunden/i.exec(err.message)
+				if (match && match[1]) {
+					logCtx.notFoundAboIds = match[1].split(', ')
+					return;
+				}
+			}
+			throw err
+		}
 
 		for (const aboId of aboIds) {
 			const abortController = subscriptions[service].get(aboId)
@@ -418,6 +429,14 @@ const createClient = (cfg, opt = {}) => {
 		}
 		subscriptions[service].clear()
 		logger.debug(logCtx, 'successfully unsubscribed from all subscriptions')
+	}
+
+	const unsubscribeAllOwned = async () => {
+		await Promise.all(Object.entries(subscriptions).map(async ([service, subs]) => {
+			const aboIds = Array.from(subs.keys())
+			if (aboIds.length === 0) return;
+			await _unsubscribe(service, aboIds, true)
+		}))
 	}
 
 	// The server should notify the client of new/changed data, so that the latter can then request it.
@@ -801,6 +820,7 @@ const createClient = (cfg, opt = {}) => {
 		ausUnsubscribe,
 		ausUnsubscribeAll,
 		ausFetchData,
+		unsubscribeAllOwned,
 	}
 }
 
