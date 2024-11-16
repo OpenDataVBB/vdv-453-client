@@ -119,6 +119,19 @@ const createClient = (cfg, opt = {}) => {
 		logger,
 		requestsLogger,
 		fetchSubscriptionsDataPeriodically,
+		onDatenBereitAnfrage,
+		onClientStatusAnfrage,
+		onStatusAntwort,
+		onSubscribed,
+		onSubscriptionExpired,
+		onSubscriptionCanceled,
+		onSubscriptionManualFetchStarted,
+		onSubscriptionManualFetchSucceeded,
+		onSubscriptionManualFetchFailed,
+		onDatenAbrufenAntwort,
+		onDataFetchStarted,
+		onDataFetchSucceeded,
+		onDataFetchFailed,
 	} = {
 		logger: pino({
 			level: process.env.LOG_LEVEL || 'info',
@@ -136,6 +149,20 @@ const createClient = (cfg, opt = {}) => {
 		// Some VDV-453 systems may not notify us about new/changed data (see _handleDatenBereitAnfrage), so we fetch the data "manually" periodically.
 		// todo [breaking]: default to false
 		fetchSubscriptionsDataPeriodically: true,
+		// hooks for debugging/metrics/etc.
+		onDatenBereitAnfrage: (svc, datenBereitAnfrage) => {},
+		onClientStatusAnfrage: (svc, clientStatusAnfrage) => {},
+		onStatusAntwort: (svc, statusAntwort) => {},
+		onSubscribed: (svc, {aboId, aboSubTag, aboSubChildren}, bestaetigung, subStats) => {},
+		onSubscriptionExpired: (svc, {aboId, aboSubTag, aboSubChildren}, subStats) => {},
+		onSubscriptionCanceled: (svc, {aboId, aboSubTag, aboSubChildren}, reason, subStats) => {},
+		onSubscriptionManualFetchStarted: (svc, {aboId, aboSubTag, aboSubChildren}) => {},
+		onSubscriptionManualFetchSucceeded: (svc, {aboId, aboSubTag, aboSubChildren}, {timePassed}) => {},
+		onSubscriptionManualFetchFailed: (svc, {aboId, aboSubTag, aboSubChildren}) => {},
+		onDatenAbrufenAntwort: (svc, {datensatzAlle, weitereDaten, itLevel, bestaetigung}) => {},
+		onDataFetchStarted: (svc, {datensatzAlle}) => {},
+		onDataFetchSucceeded: (svc, {datensatzAlle}, {nrOfFetches, timePassed}) => {},
+		onDataFetchFailed: (svc, {datensatzAlle}, err, {nrOfFetches, timePassed}) => {},
 		...opt,
 	}
 	ok('object' === typeof logger && logger, 'opt.logger must be an object')
@@ -216,6 +243,8 @@ const createClient = (cfg, opt = {}) => {
 					// > Ist die Struktur AktiveAbos leer, hat der Client keine aktiven Abonnements. Falls der Server doch welche kennt, sollen diese stillschweigend deaktiviert werden.
 				],
 			})
+
+			await onClientStatusAnfrage(service, clientStatusAnfrage)
 		})
 	}
 
@@ -244,6 +273,7 @@ const createClient = (cfg, opt = {}) => {
 					service,
 					statusAntwort: el,
 				}, 'received StatusAntwort')
+				await onStatusAntwort(service, el)
 				return el
 			}
 			// todo: otherwise warn-log unexpected tag?
@@ -310,6 +340,10 @@ const createClient = (cfg, opt = {}) => {
 		}
 		logger.debug(logCtx, 'subscribing to items')
 
+		const getSubStats = () => ({
+			nrOfSubscriptions: subscriptions[service].size,
+		})
+
 		const aboParams = [
 			x(aboSubTag, {
 				AboID: aboId,
@@ -322,6 +356,17 @@ const createClient = (cfg, opt = {}) => {
 		// We do this before sending the request because we might crash while the request is in-flight.
 		// todo: do this after the request has been sent?
 		subscriptions[service].set(aboId, subscriptionAbortController)
+
+		// on abort, call hooks
+		subscriptionAbortController.signal.addEventListener('abort', () => {
+			if (subscriptionAbortController.signal.reason === SUBSCRIPTION_EXPIRED_MSG) {
+				onSubscriptionExpired(service, logCtx, getSubStats())
+				?.catch(() => {}) // silence errors
+			} else {
+				onSubscriptionCanceled(service, logCtx, subscriptionAbortController.signal.reason, getSubStats())
+				?.catch(() => {}) // silence errors
+			}
+		})
 
 		// expiration timer fires -> abort subscription
 		// subscription aborted externally -> clear expiration timer
@@ -357,6 +402,7 @@ const createClient = (cfg, opt = {}) => {
 			service,
 			aboParams,
 		)
+		await onSubscribed(service, logCtx, bestaetigung, getSubStats())
 
 		if (fetchSubscriptionsDataPeriodically) {
 			ok(Number.isInteger(fetchInterval), 'fetchInterval must be an integer')
@@ -366,6 +412,7 @@ const createClient = (cfg, opt = {}) => {
 					logger.debug({
 						service,
 					}, 'manually fetching data')
+					await onSubscriptionManualFetchStarted(service, logCtx)
 
 					// `subscriptionAbortController` controls the periodic fetching, `fetchAbortController` controls an individual fetch. The former aborts the latter, but not vice versa.
 					const fetchAbortController = new AbortController()
@@ -375,14 +422,21 @@ const createClient = (cfg, opt = {}) => {
 					subscriptionAbortController.signal.addEventListener('abort', cancelFetch)
 
 					try {
+						const t0 = performance.now()
 						await fetch({
 							abortController: fetchAbortController,
+						})
+						const timePassed = performance.now() - t0
+
+						await onSubscriptionManualFetchSucceeded(service, logCtx, {
+							timePassed,
 						})
 					} catch (err) {
 						logger.warn({
 							service,
 							err,
 						}, `failed to fetch & process data: ${err.message}`)
+						await onSubscriptionManualFetchFailed(service, logCtx, err)
 					} finally {
 						subscriptionAbortController.signal.removeEventListener('abort', cancelFetch)
 					}
@@ -481,7 +535,7 @@ const createClient = (cfg, opt = {}) => {
 	// The server should notify the client of new/changed data, so that the latter can then request it.
 	// > 5.1.3.1 Datenbereitstellung signalisieren (DatenBereitAnfrage)
 	// > Ist das Abonnement eingerichtet und sind die Daten bereitgestellt, wird der Datenkonsument durch eine DatenBereitAnfrage über das Vorhandensein aktualisierter Daten informiert. Dies geschieht bei jeder Änderung der Daten die dem Abonnement zugeordnet sind. Die Signalisierung bezieht sich auf alle Abonnements eines Dienstes.
-	const _handleDatenBereitAnfrage = (service, onDatenBereit) => {
+	const _handleDatenBereitAnfrage = (service, _onDatenBereit) => {
 		_onRequest(service, DATEN_BEREIT, async (req, res) => {
 			const logCtx = {
 				service,
@@ -505,7 +559,10 @@ const createClient = (cfg, opt = {}) => {
 				bestaetigung: true, // send Bestaetigung element
 			})
 			try {
-				await onDatenBereit()
+				await Promise.all([
+					onDatenBereitAnfrage(service, datenBereitAnfrage),
+					_onDatenBereit(),
+				])
 			} catch (err) {
 				logger.warn({
 					service,
@@ -523,19 +580,36 @@ const createClient = (cfg, opt = {}) => {
 
 	// We need to fetch data in >1 pages. For better consumer ergonomics, we expose it as *one* async iterable. We also want to process each response's body iteratively. Effectively, by using async iteration, we signal "backpressure" to the response parsing code.
 	// However, `yield*` (and the non-async-iterable `await`) with recursive function calls prevents Node.js from garbage-collecting allocations of the caller. [0]
-	// This is why we use a trampoline [1] with no state here. Because we use `yield*`, we cannot use the (inner function's) return value to signal if iteration/recursion should continue, so we use an object instead.
+	// This is why we use a trampoline [1] here. Because we use `yield*`, we cannot use the (inner function's) return value to signal if iteration/recursion should continue, so we use an object instead.
 	// [0] https://medium.com/@RomarioDiaz25/the-problem-with-infinite-recursive-promise-resolution-chains-af5b97712661
 	// [1] https://stackoverflow.com/a/489860/1072129
 	const _fetchData = async function* (service, opt) {
+		await onDataFetchStarted(service, opt)
+
+		let timePassed = null
 		let itLevel = 0
-		const itControl = {
-			continue: false,
+		try {
+			const t0 = performance.now()
+			const itControl = {
+				continue: false,
+			}
+			while (true) {
+				itControl.continue = false
+				yield* _sendDatenAbrufenAnfrage(service, opt, itLevel++, itControl)
+				if (itControl.continue !== true) break
+			}
+			timePassed = performance.now() - t0
+		} catch (err) {
+			await onDataFetchFailed(service, opt, err, {
+				nrOfFetches: itLevel,
+				timePassed,
+			})
+			throw err
 		}
-		while (true) {
-			itControl.continue = false
-			yield* _sendDatenAbrufenAnfrage(service, opt, itLevel++, itControl)
-			if (itControl.continue !== true) break
-		}
+		await onDataFetchSucceeded(service, opt, {
+			nrOfFetches: itLevel,
+			timePassed,
+		})
 	}
 	const _sendDatenAbrufenAnfrage = async function* (service, opt, itLevel, itControl) {
 		opt = {
@@ -567,6 +641,9 @@ const createClient = (cfg, opt = {}) => {
 		const logCtx = {
 			service,
 			dataSubTag,
+			datensatzAlle,
+			bestaetigung: null, // still unknown
+			weitereDaten: null, // still unknown
 			itLevel,
 		}
 		logger.trace(logCtx, 'requesting data')
@@ -603,6 +680,7 @@ const createClient = (cfg, opt = {}) => {
 		const ctx = {
 			zst: null,
 		}
+		let onDatenAbrufenAntwortCalled = false
 		for await (const el of tags) {
 			if (abortController.signal.aborted) {
 				logger.debug({
@@ -617,6 +695,7 @@ const createClient = (cfg, opt = {}) => {
 				assertBestaetigungOk(el)
 				logCtx.bestaetigung = el
 				ctx.zst = el.$.Zst ?? null
+
 				continue
 			}
 			if (tag === WEITERE_DATEN) {
@@ -624,9 +703,15 @@ const createClient = (cfg, opt = {}) => {
 				// > 5.1.4.2 Daten übertragen (DatenAbrufenAntwort)
 				// > Der Server antwortet mit den aktualisierten Datensätzen innerhalb einer Nachricht vom Typ `DatenAbrufenAntwort`. Der Inhalt ist dienstspezifisch.
 				// > Mittels des Elementes `WeitereDaten` wird angezeigt, ob der Inhalt von `DatenAbrufenAntwort` alle aktualisierten Daten enthält, oder ob aus technischen Gründen die Übermittlung in mehrere Pakete aufgeteilt wurde. Diese Daten können durch den Datenkonsumenten durch weitere `DatenAbrufenAnfrage`n beim Produzenten abholt werden. Beim letzten Datenpaket ist das Element `WeitereDaten` auf `false` gesetzt. Abweichend vom Standardverhalten optionaler Felder hat `WeitereDaten` den Default-Wert `false`. Ein fehlendes Element `WeitereDaten` zeigt also an, dass die Datenübertragung vollständig mit diesem Paket abgeschlossen wird.
-				weitereDaten = true
+				weitereDaten = logCtx.weitereDaten = true
 			}
 			if (tag === dataSubTag) {
+				// We cannot guarantee the order of elements in the loop over `tags`, so `WEITERE_DATEN` might come *before* `BESTAETIGUNG`. Because we want both, and because we assume that actual data elements come up after the two, we call the hook here.
+				if (!onDatenAbrufenAntwortCalled) {
+					onDatenAbrufenAntwortCalled = true
+					await onDatenAbrufenAntwort(service, logCtx)
+				}
+
 				yield [el, ctx]
 				continue
 			}

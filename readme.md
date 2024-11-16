@@ -168,6 +168,7 @@ A client instance can be created by calling `createClient()`. This object is ref
 	- `logger`: used for general log messages; must be [pino](https://getpino.io/)-compatible
 	- `requestsLogger`: used for logging HTTP requests/responses; must be [pino](https://getpino.io/)-compatible
 	- `fetchSubscriptionsDataPeriodically`: if subscriptions' data should be fetched *manually* periodically, regardless of wether the server proactively reports new data using `DatenBereitAnfrage`s – default: `true`
+	- `on*()`: hooks for debug logging, keeping metrics, etc. (see the "Hooks" section)
 
 ### `client.httpServer`
 
@@ -397,6 +398,27 @@ into the following JSON tree.
 
 > [!WARNING] Among all children of a node, the last of each kind (`$name`) will also be exposed on the node as `node[child.$name]` (e.g. `LinienID` above).
 > Because you usually can't predict the number of children in a node for sure (nor the order), we recommend to always iterate over `$children` and only use the "direct" named properties if you know what you're doing.
+
+### hooks
+
+`createClient()`'s `opt` object allows you to define the following hooks. A hook can be a sync or an [async](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function) function.
+
+> ![IMPORTANT]
+> Your hook functions must never throw/reject, otherwise the client may be subtly broken!
+
+- `onDatenBereitAnfrage`: a function with the signature `async (service, datenBereitAnfrage) => {}`
+- `onClientStatusAnfrage`: a function with the signature `async (service, clientStatusAnfrage) => {}`
+- `onStatusAntwort`: a function with the signature `async (service, statusAntwort) => {}`
+- `onSubscribed`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}, bestaetigung, subStats) => {}`
+- `onSubscriptionExpired`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}, subStats) => {}`
+- `onSubscriptionCanceled`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}, reason, subStats) => {}`
+- `onSubscriptionManualFetchStarted`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}) => {}`
+- `onSubscriptionManualFetchSucceeded`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}, {timePassed}) => {}`
+- `onSubscriptionManualFetchFailed`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}) => {}`
+- `onDatenAbrufenAntwort`: a function with the signature `async (service, {datensatzAlle, weitereDaten, itLevel, bestaetigung}) => {}`
+- `onDataFetchStarted`: a function with the signature `async (service, {datensatzAlle}) => {}`
+- `onDataFetchSucceeded`: a function with the signature `async (service, {datensatzAlle}, {nrOfFetches, timePassed}) => {}`
+- `onDataFetchFailed`: a function with the signature `async (service, {datensatzAlle}, err, {nrOfFetches, timePassed}) => {}`
 
 
 ## Related
