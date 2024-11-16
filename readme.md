@@ -419,6 +419,9 @@ into the following JSON tree.
 - `onDataFetchStarted`: a function with the signature `async (service, {datensatzAlle}) => {}`
 - `onDataFetchSucceeded`: a function with the signature `async (service, {datensatzAlle}, {nrOfFetches, timePassed}) => {}`
 - `onDataFetchFailed`: a function with the signature `async (service, {datensatzAlle}, err, {nrOfFetches, timePassed}) => {}`
+- `onAusFetchStarted`: a function with the signature `async ({datensatzAlle}) => {}`
+- `onAusFetchSucceeded`: a function with the signature `async ({datensatzAlle}, {nrOfIstFahrts}) => {}`
+- `onAusFetchFailed`: a function with the signature `async ({datensatzAlle}, err, {nrOfIstFahrts}) => {}`
 
 
 ## Related

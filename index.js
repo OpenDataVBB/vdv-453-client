@@ -132,6 +132,9 @@ const createClient = (cfg, opt = {}) => {
 		onDataFetchStarted,
 		onDataFetchSucceeded,
 		onDataFetchFailed,
+		onAusFetchStarted,
+		onAusFetchSucceeded,
+		onAusFetchFailed,
 	} = {
 		logger: pino({
 			level: process.env.LOG_LEVEL || 'info',
@@ -163,6 +166,9 @@ const createClient = (cfg, opt = {}) => {
 		onDataFetchStarted: (svc, {datensatzAlle}) => {},
 		onDataFetchSucceeded: (svc, {datensatzAlle}, {nrOfFetches, timePassed}) => {},
 		onDataFetchFailed: (svc, {datensatzAlle}, err, {nrOfFetches, timePassed}) => {},
+		onAusFetchStarted: ({datensatzAlle}) => {},
+		onAusFetchSucceeded: ({datensatzAlle}, {nrOfIstFahrts}) => {},
+		onAusFetchFailed: ({datensatzAlle}, err, {nrOfIstFahrts}) => {},
 		...opt,
 	}
 	ok('object' === typeof logger && logger, 'opt.logger must be an object')
@@ -883,23 +889,40 @@ const createClient = (cfg, opt = {}) => {
 			abortController,
 		} = cfg
 
-		const els = _fetchData(AUS, {
+		const hookCtx = {
 			datensatzAlle,
-			abortController,
-		})
-		for await (const [ausNachricht, ctx] of els) {
-			const {zst} = ctx
+		}
 
-			data.emit(`raw:${AUS}:AUSNachricht`, ausNachricht)
-			for (const child of ausNachricht.$children) {
-				// e.g. `raw:aus:IstFahrt`
-				data.emit(`raw:${AUS}:${child.$name}`, child)
-				if (child.$name === 'IstFahrt') {
-					const istFahrt = parseAusIstFahrt(child, ctx)
-					data.emit(`${AUS}:IstFahrt`, istFahrt)
+		await onAusFetchStarted(hookCtx)
+		let nrOfIstFahrts = 0
+		try {
+			const els = _fetchData(AUS, {
+				datensatzAlle,
+				abortController,
+			})
+			for await (const [ausNachricht, ctx] of els) {
+				const {zst} = ctx
+
+				data.emit(`raw:${AUS}:AUSNachricht`, ausNachricht)
+				for (const child of ausNachricht.$children) {
+					// e.g. `raw:aus:IstFahrt`
+					data.emit(`raw:${AUS}:${child.$name}`, child)
+					if (child.$name === 'IstFahrt') {
+						const istFahrt = parseAusIstFahrt(child, ctx)
+						nrOfIstFahrts++
+						data.emit(`${AUS}:IstFahrt`, istFahrt)
+					}
 				}
 			}
+		} catch (err) {
+			await onAusFetchFailed(hookCtx, err, {
+				nrOfIstFahrts,
+			})
+			throw err
 		}
+		await onAusFetchSucceeded(hookCtx, {
+			nrOfIstFahrts,
+		})
 	}
 
 	// user-triggered manual fetch
