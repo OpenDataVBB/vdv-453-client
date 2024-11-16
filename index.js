@@ -86,6 +86,8 @@ const SETTIMEOUT_MAX_DELAY = 2147483647
 const DFI_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
 const AUS_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
 
+const SUBSCRIPTION_EXPIRED_MSG = 'subscription expired'
+
 const waitFor = async (ms, abortSignal) => {
 	await new Promise((resolve) => {
 		const timer = setTimeout(resolve, ms)
@@ -275,12 +277,15 @@ const createClient = (cfg, opt = {}) => {
 				assertBestaetigungOk(el)
 				// todo: warn if DatenGueltigBis < aboParams.VerfallZst?
 				// > (optional) Ende des Datenhorizontes des Datenproduzenten. Entfällt, wenn Anfrage vollständig im Datenhorizont liegt.
+				// todo: add hook onAboAntwort()?
 				return el
 			}
 			// todo: otherwise warn-log unexpected tag?
 		}
 	}
 
+	// subscriptionAbortController -> timer
+	const _expirationTimersBySubAbortController = new WeakMap()
 	const _subscribe = async (service, aboSubChildren, expiresAt, fetch, fetchInterval) => {
 		// todo: validate arguments
 		ok(
@@ -317,6 +322,35 @@ const createClient = (cfg, opt = {}) => {
 		// We do this before sending the request because we might crash while the request is in-flight.
 		// todo: do this after the request has been sent?
 		subscriptions[service].set(aboId, subscriptionAbortController)
+
+		// expiration timer fires -> abort subscription
+		// subscription aborted externally -> clear expiration timer
+		{
+			const expireSubClientSide = () => {
+				logger.trace(logCtx, 'expiring subscription client-side')
+				subscriptionAbortController.abort(SUBSCRIPTION_EXPIRED_MSG)
+				subscriptions[service].delete(aboId)
+			}
+
+			const expirationTimer = setTimeout(expireSubClientSide, expiresIn)
+			expirationTimer.unref() // todo: is this correct?
+			_expirationTimersBySubAbortController.set(subscriptionAbortController, expirationTimer)
+
+			// clear expiration timer on external subscription abort
+			// todo: Also, we clear the subscription abort listener as soon as the expiration timer fires.
+			{
+				const cancelExpirationTimer = () => {
+					logger.trace(logCtx, `subscription aborted client-side: "${subscriptionAbortController.signal.reason}"`)
+
+					// de-listen self, a.k.a. once()
+					subscriptionAbortController.signal.removeEventListener('abort', cancelExpirationTimer)
+
+					const expirationTimer = _expirationTimersBySubAbortController.get(subscriptionAbortController)
+					clearTimeout(expirationTimer)
+				}
+				subscriptionAbortController.signal.addEventListener('abort', cancelExpirationTimer)
+			}
+		}
 
 		const bestaetigung = await _sendAboAnfrage(
 			service,
