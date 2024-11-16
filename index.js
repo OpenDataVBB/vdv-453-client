@@ -328,8 +328,9 @@ const createClient = (cfg, opt = {}) => {
 		{
 			const expireSubClientSide = () => {
 				logger.trace(logCtx, 'expiring subscription client-side')
-				subscriptionAbortController.abort(SUBSCRIPTION_EXPIRED_MSG)
+				// Note: We delete from `subscriptions` before abort()-ing.
 				subscriptions[service].delete(aboId)
+				subscriptionAbortController.abort(SUBSCRIPTION_EXPIRED_MSG)
 			}
 
 			const expirationTimer = setTimeout(expireSubClientSide, expiresIn)
@@ -439,8 +440,9 @@ const createClient = (cfg, opt = {}) => {
 			if (!abortController) {
 				continue
 			}
-			abortController.abort('unsubscribed manually')
+			// Note: We delete from `subscriptions` before abort()-ing.
 			subscriptions[service].delete(aboId)
+			abortController.abort('unsubscribed manually')
 		}
 		logger.debug(logCtx, 'successfully unsubscribed from subscriptions')
 	}
@@ -460,10 +462,11 @@ const createClient = (cfg, opt = {}) => {
 		)
 		logCtx.bestaetigung = bestaetigung
 
-		for (const abortController of subscriptions[service].values()) {
+		for (const [aboId, abortController] of subscriptions[service].entries()) {
+			// Note: We delete from `subscriptions` before abort()-ing.
+			subscriptions[service].delete(aboId)
 			abortController.abort('unsubscribed manually')
 		}
-		subscriptions[service].clear()
 		logger.debug(logCtx, 'successfully unsubscribed from all subscriptions')
 	}
 
