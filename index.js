@@ -322,7 +322,7 @@ const createClient = (cfg, opt = {}) => {
 
 	// subscriptionAbortController -> timer
 	const _expirationTimersBySubAbortController = new WeakMap()
-	const _subscribe = async (service, aboSubChildren, expiresAt, fetchNewDataOnce, fetchInterval) => {
+	const _subscribe = async (service, aboSubChildren, expiresAt, fetchNewDataUntilNoMoreAvailable, fetchInterval) => {
 		// todo: validate arguments
 		ok(
 			ABO_ANFRAGE_ROOT_SUB_TAGS_BY_SERVICE.has(service),
@@ -418,6 +418,10 @@ const createClient = (cfg, opt = {}) => {
 			ok(Number.isInteger(fetchInterval), 'fetchInterval must be an integer')
 
 			const fetchPeriodicallyAndLogErrors = async () => {
+				// Usually subscriptions get created on client startup, so wait a bit for the server to notify us about new data (DatenBereitAnfrage) *if it supports that*. Only when it hasn't done that (quickly enough), we fetch manually.
+				const fetchIntervalInitialWait = Math.max(fetchInterval / 30, 2_000) // 2 seconds minimum
+				await new Promise(resolve => setTimeout(resolve, fetchIntervalInitialWait))
+
 				while (!subscriptionAbortController.signal.aborted) {
 					logger.debug(logCtx, 'manually fetching data')
 					await onSubscriptionManualFetchStarted(service, logCtx)
@@ -431,9 +435,10 @@ const createClient = (cfg, opt = {}) => {
 
 					try {
 						const t0 = performance.now()
-						await fetchNewDateOnce({
-							abortController: fetchAbortController,
-						})
+						// Note: The server might also notify us of new data, to which we react with fetching new data (see _handleDatenBereitAnfrage()), so just doing it "manually" here nonetheless would result in fetching the twice in parallel. Therefore we use _fetch*NewDataUntilNoMoreAvailable() with maxIterations=1 instead of _fetchNew*DataOnce(), because the former will only ever run once in parallel.
+						// todo [breaking]: Infinity maxIterations (and remove parameter) – this breaks the assumption how often a manual fetch will be done: "every fetchInterval + timePassed(fetchOnce)" -> "whenever fetchInterval has passed without DatenBereitAbfrage"
+						const maxIterations = 1
+						await fetchNewDataUntilNoMoreAvailable(maxIterations)
 						const timePassed = performance.now() - t0
 
 						await onSubscriptionManualFetchSucceeded(service, logCtx, {
@@ -555,8 +560,10 @@ const createClient = (cfg, opt = {}) => {
 	// The VDV API is constantly notifying us via `DatenBereitAnfrage`s when any IstFahrt(s) has changed, even while we're currently fetching. Because of the latency between us and the API, it's essentially a distributed system of two parties that try to sync their state: We do't know if the newly changed IstFahrt is already included in the data currently being fetched.
 	// This is why we just fetch again afterwards whenever we have received a DatenBereitAnfrage while fetching.
 	const _fetchNewDataUntilNoMoreAvailable = async (service, fetchNewDataOnce, maxIterations) => {
+		ok(maxIterations === Infinity || Number.isInteger(maxIterations))
 		const logCtx = {
 			service,
+			maxIterations: String(maxIterations), // pino cannot serialize Infinity :/
 		}
 
 		if (subscriptions[service].size === 0) { // 0 subscriptions on `service`
@@ -571,8 +578,9 @@ const createClient = (cfg, opt = {}) => {
 		logger.debug(logCtx, `starting to fetch new ${service} data until no new data is available anymore`)
 
 		isFetchingData[service] = true
+		let iterations = 0
 		try {
-			while (datenBereitAnfrageReceivedWhileFetching[service]) {
+			while (++iterations <= maxIterations && datenBereitAnfrageReceivedWhileFetching[service]) {
 				datenBereitAnfrageReceivedWhileFetching[service] = false
 				// We must keep looping even with fetch failures, so we catch & log all errors.
 				try {
@@ -625,7 +633,8 @@ const createClient = (cfg, opt = {}) => {
 
 			datenBereitAnfrageReceivedWhileFetching[service] = true
 
-			fetchNewDataUntilNoMoreAvailable()
+			const maxIterations = Infinity
+			fetchNewDataUntilNoMoreAvailable(maxIterations)
 			.catch((err) => {
 				// Because it catches fetch errors by itself, if it does reject, we likely have a bug.
 				logger.error({
@@ -843,7 +852,7 @@ const createClient = (cfg, opt = {}) => {
 			DFI,
 			aboSubChildren,
 			expiresAt,
-			_fetchNewDfiDataOnce,
+			_fetchNewDfiDataUntilNoMoreAvailable,
 			fetchInterval,
 		)
 	}
@@ -883,8 +892,8 @@ const createClient = (cfg, opt = {}) => {
 	}
 
 	// fetch triggered by the data provider, or by the subscription's manual fetch interval
-	const _fetchNewDfiDataUntilNoMoreAvailable = async () => {
-		await _fetchNewDataUntilNoMoreAvailable(DFI, _fetchNewDfiDataOnce)
+	const _fetchNewDfiDataUntilNoMoreAvailable = async (maxIterations) => {
+		await _fetchNewDataUntilNoMoreAvailable(DFI, _fetchNewDfiDataOnce, maxIterations)
 	}
 	_handleDatenBereitAnfrage(DFI, _fetchNewDfiDataUntilNoMoreAvailable)
 
@@ -944,7 +953,7 @@ const createClient = (cfg, opt = {}) => {
 			AUS,
 			aboSubChildren,
 			expiresAt,
-			_fetchNewAusDataOnce,
+			_fetchNewAusDataUntilNoMoreAvailable,
 			fetchInterval,
 		)
 	}
@@ -1010,8 +1019,8 @@ const createClient = (cfg, opt = {}) => {
 	}
 
 	// fetch triggered by the data provider, or by the subscription's manual fetch interval
-	const _fetchNewAusDataUntilNoMoreAvailable = async () => {
-		await _fetchNewDataUntilNoMoreAvailable(AUS, _fetchNewAusDataOnce)
+	const _fetchNewAusDataUntilNoMoreAvailable = async (maxIterations) => {
+		await _fetchNewDataUntilNoMoreAvailable(AUS, _fetchNewAusDataOnce, maxIterations)
 	}
 	_handleDatenBereitAnfrage(AUS, _fetchNewAusDataUntilNoMoreAvailable)
 
