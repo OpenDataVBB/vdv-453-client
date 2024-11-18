@@ -322,7 +322,7 @@ const createClient = (cfg, opt = {}) => {
 
 	// subscriptionAbortController -> timer
 	const _expirationTimersBySubAbortController = new WeakMap()
-	const _subscribe = async (service, aboSubChildren, expiresAt, fetch, fetchInterval) => {
+	const _subscribe = async (service, aboSubChildren, expiresAt, fetchNewDataOnce, fetchInterval) => {
 		// todo: validate arguments
 		ok(
 			ABO_ANFRAGE_ROOT_SUB_TAGS_BY_SERVICE.has(service),
@@ -431,7 +431,7 @@ const createClient = (cfg, opt = {}) => {
 
 					try {
 						const t0 = performance.now()
-						await fetch({
+						await fetchNewDateOnce({
 							abortController: fetchAbortController,
 						})
 						const timePassed = performance.now() - t0
@@ -543,7 +543,7 @@ const createClient = (cfg, opt = {}) => {
 	// The server should notify the client of new/changed data, so that the latter can then request it.
 	// > 5.1.3.1 Datenbereitstellung signalisieren (DatenBereitAnfrage)
 	// > Ist das Abonnement eingerichtet und sind die Daten bereitgestellt, wird der Datenkonsument durch eine DatenBereitAnfrage über das Vorhandensein aktualisierter Daten informiert. Dies geschieht bei jeder Änderung der Daten die dem Abonnement zugeordnet sind. Die Signalisierung bezieht sich auf alle Abonnements eines Dienstes.
-	const _handleDatenBereitAnfrage = (service, _onDatenBereit) => {
+	const _handleDatenBereitAnfrage = (service, fetchNewDataOnce) => {
 		const _processDatenBereitAnfrage = async (req, res) => {
 			const logCtx = {
 				service,
@@ -566,11 +566,14 @@ const createClient = (cfg, opt = {}) => {
 				ok: true,
 				bestaetigung: true, // send Bestaetigung element
 			})
+
+			await onDatenBereitAnfrage(service, datenBereitAnfrage)
+
 			try {
-				await Promise.all([
-					onDatenBereitAnfrage(service, datenBereitAnfrage),
-					_onDatenBereit(),
-				])
+				await fetchNewDataOnce({
+					// There is no reasonable way to abort here, so we make a dummy AbortController.
+					abortController: new AbortController(),
+				})
 			} catch (err) {
 				logger.warn({
 					service,
@@ -592,7 +595,7 @@ const createClient = (cfg, opt = {}) => {
 	// This is why we use a trampoline [1] here. Because we use `yield*`, we cannot use the (inner function's) return value to signal if iteration/recursion should continue, so we use an object instead.
 	// [0] https://medium.com/@RomarioDiaz25/the-problem-with-infinite-recursive-promise-resolution-chains-af5b97712661
 	// [1] https://stackoverflow.com/a/489860/1072129
-	const _fetchData = async function* (service, opt) {
+	const _fetchDataOnce = async function* (service, opt) {
 		await onDataFetchStarted(service, opt)
 
 		let timePassed = null
@@ -781,7 +784,13 @@ const createClient = (cfg, opt = {}) => {
 			// todo: MaxTextLaenge
 			// todo: NurAktualisierung
 		]
-		return await _subscribe(DFI, aboSubChildren, expiresAt, _fetchNewDfiData, fetchInterval)
+		return await _subscribe(
+			DFI,
+			aboSubChildren,
+			expiresAt,
+			_fetchNewDfiDataOnce,
+			fetchInterval,
+		)
 	}
 	const dfiUnsubscribe = async (...aboIds) => {
 		return await _unsubscribe(DFI, aboIds)
@@ -790,12 +799,12 @@ const createClient = (cfg, opt = {}) => {
 		return await _unsubscribeAll(DFI)
 	}
 
-	const _fetchNewDfiData = async (cfg) => {
+	const _fetchNewDfiDataOnce = async (cfg) => {
 		const {
 			abortController,
 		} = cfg
 
-		const els = _fetchData(DFI, {
+		const els = _fetchDataOnce(DFI, {
 			datensatzAlle,
 			abortController,
 		})
@@ -813,18 +822,13 @@ const createClient = (cfg, opt = {}) => {
 			abortController: new AbortController(),
 			...opt,
 		}
-		await _fetchNewDfiData({
+		await _fetchNewDfiDataOnce({
 			abortController,
 		})
 	}
 
-	// fetch triggered by the data provider
-	_handleDatenBereitAnfrage(DFI, async () => {
-		await _fetchNewDfiData({
-			// There is no reasonable way to abort here, so we make a dummy AbortController.
-			abortController: new AbortController()
-		})
-	})
+	// fetch triggered by the data provider, or by the subscription's manual fetch interval
+	_handleDatenBereitAnfrage(DFI, _fetchNewDfiDataOnce)
 
 	// ----------------------------------
 
@@ -878,7 +882,13 @@ const createClient = (cfg, opt = {}) => {
 			// Note: <Vorschauzeit> has to be the last child element!
 			x('Vorschauzeit', {}, vorschauzeit),
 		]
-		return await _subscribe(AUS, aboSubChildren, expiresAt, _fetchNewAusData, fetchInterval)
+		return await _subscribe(
+			AUS,
+			aboSubChildren,
+			expiresAt,
+			_fetchNewAusDataOnce,
+			fetchInterval,
+		)
 	}
 	const ausUnsubscribe = async (...aboIds) => {
 		return await _unsubscribe(AUS, aboIds)
@@ -887,7 +897,7 @@ const createClient = (cfg, opt = {}) => {
 		return await _unsubscribeAll(AUS)
 	}
 
-	const _fetchNewAusData = async (cfg) => {
+	const _fetchNewAusDataOnce = async (cfg) => {
 		const {
 			abortController,
 		} = cfg
@@ -899,7 +909,7 @@ const createClient = (cfg, opt = {}) => {
 		await onAusFetchStarted(hookCtx)
 		let nrOfIstFahrts = 0
 		try {
-			const els = _fetchData(AUS, {
+			const els = _fetchDataOnce(AUS, {
 				datensatzAlle,
 				abortController,
 			})
@@ -936,18 +946,13 @@ const createClient = (cfg, opt = {}) => {
 			abortController: new AbortController(),
 			...opt,
 		}
-		await _fetchNewAusData({
+		await _fetchNewAusDataOnce({
 			abortController,
 		})
 	}
 
-	// fetch triggered by the data provider
-	_handleDatenBereitAnfrage(AUS, async () => {
-		await _fetchNewAusData({
-			// There is no reasonable way to abort here, so we make a dummy AbortController.
-			abortController: new AbortController()
-		})
-	})
+	// fetch triggered by the data provider, or by the subscription's manual fetch interval
+	_handleDatenBereitAnfrage(AUS, _fetchNewAusDataOnce)
 
 	// ----------------------------------
 
