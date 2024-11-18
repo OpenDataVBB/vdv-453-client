@@ -255,7 +255,13 @@ const createClient = (cfg, opt = {}) => {
 	}
 
 	const _sendStatusAnfrage = async (service) => {
+		const logCtx = {
+			service,
+		}
+
 		const {
+			clientRequest: req,
+			serverResponse: res,
 			parseResponse,
 			assertStatusAntwortOk,
 		} = await sendRequest(
@@ -273,17 +279,40 @@ const createClient = (cfg, opt = {}) => {
 		for await (const el of tags) {
 			const tag = el.$name
 			if (tag === 'StatusAntwort') {
-				assertStatusAntwortOk(el)
-
+				assertStatusAntwortOk(el, logCtx)
+				const datenBereit = el.DatenBereit?.$text?.trim() === 'true'
+				const startDienstZst = el.StartDienstZst?.$text || null
 				logger.debug({
-					service,
-					statusAntwort: el,
+					...logCtx,
+					datenBereit,
+					startDienstZst,
 				}, 'received StatusAntwort')
+
 				await onStatusAntwort(service, el)
-				return el
+
+				// todo: check server's `StartDienstZst` and compare it with our `startDienstZst`
+				// > 5.1.8.3 ClientStatusAnfrage
+				// > […]
+				// > […] oder [der Server] setzt den StartDienstZst in seiner StatusAntwort auf die aktuelle Zeit und erzwingt somit die Neuinitialisierung des Clients. […]
+
+				return {
+					datenBereit,
+					startDienstZst,
+					statusAntwort: el,
+				}
 			}
 			// todo: otherwise warn-log unexpected tag?
 		}
+		throw new Vdv453ApiError(
+			service,
+			'StatusAnfrage',
+			`server's reponse body does not contain a StatusAntwort`,
+			'?',
+			req,
+			null, // reqOpts
+			null, // reqBody
+			res,
+		)
 	}
 	// todo: send StatusAnfrage periodically, to detect client & server hiccups
 	// > Verliert der Server seine Abonnement-Daten, so ist dies zunächst vom Client aus nicht fest- stellbar. DatenBereitAnfragen bleiben zwar aus, aber dies kann nicht vom normalen Betrieb unterschieden und somit der Absturz des Servers nicht festgestellt werden. Um diesen Fall zu erkennen, sind zusätzliche, zyklische Anfragen vom Typ StatusAnfrage (5.1.8.1) zum Server zu senden. Innerhalb der StatusAntwort (5.1.8.2) gibt der Server den Zeitstempel des Dienststarts an. Fand der Dienststart nach der Einrichtung der Abonnements statt, so muss vom Verlust der Abonnements ausgegangen werden. Es ist nun zu verfahren wie beim Client-Datenverlust: Löschen und Neueinrichtung aller Abonnements.
@@ -897,6 +926,10 @@ const createClient = (cfg, opt = {}) => {
 	}
 	_handleDatenBereitAnfrage(DFI, _fetchNewDfiDataUntilNoMoreAvailable)
 
+	const dfiCheckServerStatus = async () => {
+		return await _sendStatusAnfrage(DFI)
+	}
+
 	// ----------------------------------
 
 	const ausSubscribe = async (opt = {}) => {
@@ -1024,6 +1057,10 @@ const createClient = (cfg, opt = {}) => {
 	}
 	_handleDatenBereitAnfrage(AUS, _fetchNewAusDataUntilNoMoreAvailable)
 
+	const ausCheckServerStatus = async () => {
+		return await _sendStatusAnfrage(AUS)
+	}
+
 	// ----------------------------------
 
 	router.use(errorHandler)
@@ -1044,10 +1081,12 @@ const createClient = (cfg, opt = {}) => {
 		dfiUnsubscribe,
 		dfiUnsubscribeAll,
 		dfiFetchData,
+		dfiCheckServerStatus,
 		ausSubscribe,
 		ausUnsubscribe,
 		ausUnsubscribeAll,
 		ausFetchData,
+		ausCheckServerStatus,
 		unsubscribeAllOwned,
 	}
 }

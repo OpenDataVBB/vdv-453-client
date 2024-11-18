@@ -230,6 +230,16 @@ After subscribing successfully, it will return an object with the following fiel
 
 `dfiUnsubscribeAll()` is an async function that 0 arguments. It unsubscribes from all active `DFI` subscriptions the server knows about.
 
+### `client.dfiCheckServerStatus()`
+
+Sends a VDV-453 `StatusAnfrage` to the server, to obtain information about the server's state related to the `DFI` service.
+
+`dfiCheckServerStatus()` is an async function that returns an object with the following fields:
+
+- `datenBereit` (boolean): If the server has new `DFI` data to be fetched by the client.
+- `startDienstZst` (ISO 8601 string or `null`): When the server's `DFI` service has been started.
+- `statusAntwort` (object): The whole response's `StatusAntwort` element.
+
 ### `client.ausSubscribe()`
 
 `ausSubscribe(opt = {})` is an async function that takes the following arguments:
@@ -255,6 +265,10 @@ Works like `client.dfiUnsubscribe()`, except for `AUS`.
 ### `client.ausUnsubscribeAll()`
 
 Works like `client.dfiUnsubscribeAll()`, except for `AUS`.
+
+### `client.ausCheckServerStatus()`
+
+Works like `client.dfiCheckServerStatus()`, except for `AUS`.
 
 ### `client.unsubscribeAllOwned()`
 
