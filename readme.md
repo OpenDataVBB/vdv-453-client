@@ -158,7 +158,16 @@ data.on('aus:IstFahrt', (istFahrt) => {
 > [!TIP]
 > The `REF-AUS` & `AUS` services are defined in VDV-454. All other services are defined in VDV-453.
 
-A client instance can be created by calling `createClient()`, which returns an object with the following fields.
+A client instance can be created by calling `createClient()`. This object is referred to as `client` below.
+
+`createClient()` takes the following arguments:
+1. `cfg`: an object with these fields:
+	- `leitstelle`: the client's *Leitstellenkennung* (see the "Getting Started" section)
+	- `theirLeitstelle`: the server's *Leitstellenkennung*
+2. `opt`: an optional object whose fields override these defaults:
+	- `logger`: used for general log messages; must be [pino](https://getpino.io/)-compatible
+	- `requestsLogger`: used for logging HTTP requests/responses; must be [pino](https://getpino.io/)-compatible
+	- `fetchSubscriptionsDataPeriodically`: if subscriptions' data should be fetched *manually* periodically, regardless of wether the server proactively reports new data using `DatenBereitAnfrage`s – default: `true`
 
 ### `client.httpServer`
 
