@@ -341,10 +341,14 @@ const createClient = (cfg, opt = {}) => {
 		const logCtx = {
 			service,
 			aboId,
+			expiresAt,
+			fetchInterval,
+		}
+		logger.debug({
+			...logCtx,
 			aboSubTag,
 			aboSubChildren,
-		}
-		logger.debug(logCtx, 'subscribing to items')
+		}, 'subscribing to items')
 
 		const getSubStats = () => ({
 			nrOfSubscriptions: subscriptions[service].size,
@@ -415,9 +419,7 @@ const createClient = (cfg, opt = {}) => {
 
 			const fetchPeriodicallyAndLogErrors = async () => {
 				while (!subscriptionAbortController.signal.aborted) {
-					logger.debug({
-						service,
-					}, 'manually fetching data')
+					logger.debug(logCtx, 'manually fetching data')
 					await onSubscriptionManualFetchStarted(service, logCtx)
 
 					// `subscriptionAbortController` controls the periodic fetching, `fetchAbortController` controls an individual fetch. The former aborts the latter, but not vice versa.
@@ -439,7 +441,7 @@ const createClient = (cfg, opt = {}) => {
 						})
 					} catch (err) {
 						logger.warn({
-							service,
+							...logCtx,
 							err,
 						}, `failed to fetch & process data: ${err.message}`)
 						await onSubscriptionManualFetchFailed(service, logCtx, err)
@@ -542,7 +544,7 @@ const createClient = (cfg, opt = {}) => {
 	// > 5.1.3.1 Datenbereitstellung signalisieren (DatenBereitAnfrage)
 	// > Ist das Abonnement eingerichtet und sind die Daten bereitgestellt, wird der Datenkonsument durch eine DatenBereitAnfrage über das Vorhandensein aktualisierter Daten informiert. Dies geschieht bei jeder Änderung der Daten die dem Abonnement zugeordnet sind. Die Signalisierung bezieht sich auf alle Abonnements eines Dienstes.
 	const _handleDatenBereitAnfrage = (service, _onDatenBereit) => {
-		_onRequest(service, DATEN_BEREIT, async (req, res) => {
+		const _processDatenBereitAnfrage = async (req, res) => {
 			const logCtx = {
 				service,
 			}
@@ -575,7 +577,8 @@ const createClient = (cfg, opt = {}) => {
 					err,
 				}, `failed to handle DatenBereitAnfrage: ${err.message}`)
 			}
-		})
+		}
+		_onRequest(service, DATEN_BEREIT, _processDatenBereitAnfrage)
 	}
 
 	// todo:
