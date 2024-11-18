@@ -543,6 +543,8 @@ const createClient = (cfg, opt = {}) => {
 	// ----------------------------------
 
 	// service -> true/false
+	const isFetchingData = {}
+	// service -> true/false
 	// - set to true by _processDatenBereitAnfrage() at any point in time
 	// - set to false by _fetchNewDataUntilNoMoreAvailable() before fetching
 	const datenBereitAnfrageReceivedWhileFetching = {}
@@ -561,9 +563,15 @@ const createClient = (cfg, opt = {}) => {
 			logger.trace(logCtx, `not starting to fetch new ${service} data again, because there are no subscriptions (anymore)`)
 			return;
 		}
+		// Make sure there's only ever one of this function running.
+		if (isFetchingData[service]) {
+			logger.trace(logCtx, `not starting to fetch new ${service} data again, because we're already fetching`)
+			return;
+		}
 		logger.debug(logCtx, `starting to fetch new ${service} data until no new data is available anymore`)
 
-		{
+		isFetchingData[service] = true
+		try {
 			while (datenBereitAnfrageReceivedWhileFetching[service]) {
 				datenBereitAnfrageReceivedWhileFetching[service] = false
 				// We must keep looping even with fetch failures, so we catch & log all errors.
@@ -583,6 +591,8 @@ const createClient = (cfg, opt = {}) => {
 				}
 				// todo: wait for a moment before refetching?
 			}
+		} finally {
+			isFetchingData[service] = false
 		}
 	}
 
