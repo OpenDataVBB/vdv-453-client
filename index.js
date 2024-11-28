@@ -387,6 +387,7 @@ const createClient = (cfg, opt = {}) => {
 			x(aboSubTag, {
 				AboID: aboId,
 				VerfallZst: getZst(expiresAt),
+				// todo: support attributes!
 			}, aboSubChildren)
 		]
 
@@ -864,6 +865,7 @@ const createClient = (cfg, opt = {}) => {
 			vorschauzeit: 10, // minutes
 			// todo: is `0` possible? does it provide more data?
 			hysterese: 1, // seconds
+			// todo [breaking]: rename to `manualFetchInterval`
 			fetchInterval: 30_000, // 30s
 			...opt,
 		}
@@ -962,6 +964,7 @@ const createClient = (cfg, opt = {}) => {
 			// > Die Hysterese des Lieferanten "VBB DDS" ist 60 Sekunden […].
 			// todo: does a lower value work too? nowadays many clients would be interested in delays <60s...
 			hysterese: 60, // seconds
+			// todo [breaking]: rename to `manualFetchInterval`
 			fetchInterval: 30_000, // 30s
 			...opt,
 		}
@@ -1008,6 +1011,7 @@ const createClient = (cfg, opt = {}) => {
 
 		const hookCtx = {
 			datensatzAlle,
+			// todo: expose if this was a manual fetch or due to DatenBereitAnfrage!
 		}
 
 		await onAusFetchStarted(hookCtx)
