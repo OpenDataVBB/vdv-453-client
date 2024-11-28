@@ -473,6 +473,10 @@ const createClient = (cfg, opt = {}) => {
 						await onSubscriptionManualFetchSucceeded(service, logCtx, {
 							timePassed,
 						})
+						logger.debug({
+							...logCtx,
+							timePassed,
+						}, 'successfully fetched data manually')
 					} catch (err) {
 						logger.warn({
 							...logCtx,
