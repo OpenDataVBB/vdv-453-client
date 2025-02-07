@@ -1,0 +1,2498 @@
+{
+	"$name": "IstFahrt",
+	"$": {},
+	"$text": "",
+	"$children": [
+		{
+			"$name": "LinienID",
+			"$": {},
+			"$text": "7610",
+			"$children": []
+		},
+		{
+			"$name": "RichtungsID",
+			"$": {},
+			"$text": "Ahrensfelde (S)#Berlin-Wannsee",
+			"$children": []
+		},
+		{
+			"$name": "FahrtRef",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "FahrtID",
+					"$": {},
+					"$text": "",
+					"$children": [
+						{
+							"$name": "FahrtBezeichner",
+							"$": {},
+							"$text": "7610-08-8089188-210100#DB",
+							"$children": []
+						},
+						{
+							"$name": "Betriebstag",
+							"$": {},
+							"$text": "2025-02-06",
+							"$children": []
+						}
+					],
+					"FahrtBezeichner": {
+						"$name": "FahrtBezeichner",
+						"$": {},
+						"$text": "7610-08-8089188-210100#DB",
+						"$children": []
+					},
+					"Betriebstag": {
+						"$name": "Betriebstag",
+						"$": {},
+						"$text": "2025-02-06",
+						"$children": []
+					}
+				},
+				{
+					"$name": "FahrtStartEnde",
+					"$": {},
+					"$text": "",
+					"$children": [
+						{
+							"$name": "StartHaltID",
+							"$": {},
+							"$text": "ODEG_900170004",
+							"$children": []
+						},
+						{
+							"$name": "Startzeit",
+							"$": {},
+							"$text": "2025-02-06T21:01:00+01:00",
+							"$children": []
+						},
+						{
+							"$name": "EndHaltID",
+							"$": {},
+							"$text": "ODEG_900053301",
+							"$children": []
+						},
+						{
+							"$name": "Endzeit",
+							"$": {},
+							"$text": "2025-02-06T22:02:00+01:00",
+							"$children": []
+						}
+					],
+					"StartHaltID": {
+						"$name": "StartHaltID",
+						"$": {},
+						"$text": "ODEG_900170004",
+						"$children": []
+					},
+					"Startzeit": {
+						"$name": "Startzeit",
+						"$": {},
+						"$text": "2025-02-06T21:01:00+01:00",
+						"$children": []
+					},
+					"EndHaltID": {
+						"$name": "EndHaltID",
+						"$": {},
+						"$text": "ODEG_900053301",
+						"$children": []
+					},
+					"Endzeit": {
+						"$name": "Endzeit",
+						"$": {},
+						"$text": "2025-02-06T22:02:00+01:00",
+						"$children": []
+					}
+				}
+			],
+			"FahrtID": {
+				"$name": "FahrtID",
+				"$": {},
+				"$text": "",
+				"$children": [
+					{
+						"$name": "FahrtBezeichner",
+						"$": {},
+						"$text": "7610-08-8089188-210100#DB",
+						"$children": []
+					},
+					{
+						"$name": "Betriebstag",
+						"$": {},
+						"$text": "2025-02-06",
+						"$children": []
+					}
+				],
+				"FahrtBezeichner": {
+					"$name": "FahrtBezeichner",
+					"$": {},
+					"$text": "7610-08-8089188-210100#DB",
+					"$children": []
+				},
+				"Betriebstag": {
+					"$name": "Betriebstag",
+					"$": {},
+					"$text": "2025-02-06",
+					"$children": []
+				}
+			},
+			"FahrtStartEnde": {
+				"$name": "FahrtStartEnde",
+				"$": {},
+				"$text": "",
+				"$children": [
+					{
+						"$name": "StartHaltID",
+						"$": {},
+						"$text": "ODEG_900170004",
+						"$children": []
+					},
+					{
+						"$name": "Startzeit",
+						"$": {},
+						"$text": "2025-02-06T21:01:00+01:00",
+						"$children": []
+					},
+					{
+						"$name": "EndHaltID",
+						"$": {},
+						"$text": "ODEG_900053301",
+						"$children": []
+					},
+					{
+						"$name": "Endzeit",
+						"$": {},
+						"$text": "2025-02-06T22:02:00+01:00",
+						"$children": []
+					}
+				],
+				"StartHaltID": {
+					"$name": "StartHaltID",
+					"$": {},
+					"$text": "ODEG_900170004",
+					"$children": []
+				},
+				"Startzeit": {
+					"$name": "Startzeit",
+					"$": {},
+					"$text": "2025-02-06T21:01:00+01:00",
+					"$children": []
+				},
+				"EndHaltID": {
+					"$name": "EndHaltID",
+					"$": {},
+					"$text": "ODEG_900053301",
+					"$children": []
+				},
+				"Endzeit": {
+					"$name": "Endzeit",
+					"$": {},
+					"$text": "2025-02-06T22:02:00+01:00",
+					"$children": []
+				}
+			}
+		},
+		{
+			"$name": "Komplettfahrt",
+			"$": {},
+			"$text": "false",
+			"$children": []
+		},
+		{
+			"$name": "BetreiberID",
+			"$": {},
+			"$text": "DB",
+			"$children": []
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900170004",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:01:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "41",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900170004",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:01:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "41",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900170003",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:03:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:03:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900170003",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:03:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:03:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900170002",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:05:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:05:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900170002",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:05:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:05:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900170001",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:07:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:06:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900170001",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:07:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:06:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900170005",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:09:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:08:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900170005",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:09:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:08:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900171003",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:11:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:10:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900171003",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:11:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:10:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900171002",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:14:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:13:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900171002",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:14:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:13:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900160004",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:16:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:16:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900160004",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:16:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:16:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900160003",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:18:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:18:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "2",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900160003",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:18:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:18:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "2",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900120003",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:21:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:20:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "6",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "6",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900120003",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:21:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:20:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "6",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "6",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900120004",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:23:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:23:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900120004",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:23:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:23:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900120005",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:26:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:25:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "11",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "11",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900120005",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:26:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:25:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "11",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "11",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900100004",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:28:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:27:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900100004",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:28:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:27:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900100003",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:30:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:29:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900100003",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:30:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:29:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900100002",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:32:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:31:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900100002",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:32:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:31:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900100001",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:34:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:33:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "6",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "6",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900100001",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:34:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:33:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "6",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "6",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900003201",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:37:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:36:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "16",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "16",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900003201",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:37:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:36:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "16",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "16",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900003102",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:39:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:39:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900003102",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:39:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:39:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900003103",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:41:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:41:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900003103",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:41:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:41:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900023201",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:43:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:43:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "6",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "6",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900023201",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:43:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:43:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "6",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "6",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900024203",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:45:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:45:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "4",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900024203",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:45:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:45:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "4",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900024101",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:47:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:47:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "8",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "8",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900024101",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:47:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:47:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "8",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "8",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900024102",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:50:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:49:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "1",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "1",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900024102",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:50:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:49:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "1",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "1",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900048101",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T21:53:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T21:52:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "1",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "1",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900048101",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T21:53:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T21:52:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "1",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "1",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900052201",
+					"$children": []
+				},
+				{
+					"$name": "Abfahrtszeit",
+					"$": {},
+					"$text": "2025-02-06T22:00:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T22:00:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AbfahrtssteigText",
+					"$": {},
+					"$text": "3",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "3",
+					"$children": []
+				},
+				{
+					"$name": "RichtungsText",
+					"$": {},
+					"$text": "Berlin-Wannsee",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900052201",
+				"$children": []
+			},
+			"Abfahrtszeit": {
+				"$name": "Abfahrtszeit",
+				"$": {},
+				"$text": "2025-02-06T22:00:00+01:00",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T22:00:00+01:00",
+				"$children": []
+			},
+			"AbfahrtssteigText": {
+				"$name": "AbfahrtssteigText",
+				"$": {},
+				"$text": "3",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "3",
+				"$children": []
+			},
+			"RichtungsText": {
+				"$name": "RichtungsText",
+				"$": {},
+				"$text": "Berlin-Wannsee",
+				"$children": []
+			}
+		},
+		{
+			"$name": "IstHalt",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "HaltID",
+					"$": {},
+					"$text": "ODEG_900053301",
+					"$children": []
+				},
+				{
+					"$name": "Ankunftszeit",
+					"$": {},
+					"$text": "2025-02-06T22:02:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "AnkunftssteigText",
+					"$": {},
+					"$text": "1",
+					"$children": []
+				}
+			],
+			"HaltID": {
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900053301",
+				"$children": []
+			},
+			"Ankunftszeit": {
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T22:02:00+01:00",
+				"$children": []
+			},
+			"AnkunftssteigText": {
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "1",
+				"$children": []
+			}
+		},
+		{
+			"$name": "LinienText",
+			"$": {},
+			"$text": "S7",
+			"$children": []
+		},
+		{
+			"$name": "ProduktID",
+			"$": {},
+			"$text": "S",
+			"$children": []
+		},
+		{
+			"$name": "PrognoseMoeglich",
+			"$": {},
+			"$text": "true",
+			"$children": []
+		},
+		{
+			"$name": "FaelltAus",
+			"$": {},
+			"$text": "true",
+			"$children": []
+		}
+	],
+	"LinienID": {
+		"$name": "LinienID",
+		"$": {},
+		"$text": "7610",
+		"$children": []
+	},
+	"RichtungsID": {
+		"$name": "RichtungsID",
+		"$": {},
+		"$text": "Ahrensfelde (S)#Berlin-Wannsee",
+		"$children": []
+	},
+	"FahrtRef": {
+		"$name": "FahrtRef",
+		"$": {},
+		"$text": "",
+		"$children": [
+			{
+				"$name": "FahrtID",
+				"$": {},
+				"$text": "",
+				"$children": [
+					{
+						"$name": "FahrtBezeichner",
+						"$": {},
+						"$text": "7610-08-8089188-210100#DB",
+						"$children": []
+					},
+					{
+						"$name": "Betriebstag",
+						"$": {},
+						"$text": "2025-02-06",
+						"$children": []
+					}
+				],
+				"FahrtBezeichner": {
+					"$name": "FahrtBezeichner",
+					"$": {},
+					"$text": "7610-08-8089188-210100#DB",
+					"$children": []
+				},
+				"Betriebstag": {
+					"$name": "Betriebstag",
+					"$": {},
+					"$text": "2025-02-06",
+					"$children": []
+				}
+			},
+			{
+				"$name": "FahrtStartEnde",
+				"$": {},
+				"$text": "",
+				"$children": [
+					{
+						"$name": "StartHaltID",
+						"$": {},
+						"$text": "ODEG_900170004",
+						"$children": []
+					},
+					{
+						"$name": "Startzeit",
+						"$": {},
+						"$text": "2025-02-06T21:01:00+01:00",
+						"$children": []
+					},
+					{
+						"$name": "EndHaltID",
+						"$": {},
+						"$text": "ODEG_900053301",
+						"$children": []
+					},
+					{
+						"$name": "Endzeit",
+						"$": {},
+						"$text": "2025-02-06T22:02:00+01:00",
+						"$children": []
+					}
+				],
+				"StartHaltID": {
+					"$name": "StartHaltID",
+					"$": {},
+					"$text": "ODEG_900170004",
+					"$children": []
+				},
+				"Startzeit": {
+					"$name": "Startzeit",
+					"$": {},
+					"$text": "2025-02-06T21:01:00+01:00",
+					"$children": []
+				},
+				"EndHaltID": {
+					"$name": "EndHaltID",
+					"$": {},
+					"$text": "ODEG_900053301",
+					"$children": []
+				},
+				"Endzeit": {
+					"$name": "Endzeit",
+					"$": {},
+					"$text": "2025-02-06T22:02:00+01:00",
+					"$children": []
+				}
+			}
+		],
+		"FahrtID": {
+			"$name": "FahrtID",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "FahrtBezeichner",
+					"$": {},
+					"$text": "7610-08-8089188-210100#DB",
+					"$children": []
+				},
+				{
+					"$name": "Betriebstag",
+					"$": {},
+					"$text": "2025-02-06",
+					"$children": []
+				}
+			],
+			"FahrtBezeichner": {
+				"$name": "FahrtBezeichner",
+				"$": {},
+				"$text": "7610-08-8089188-210100#DB",
+				"$children": []
+			},
+			"Betriebstag": {
+				"$name": "Betriebstag",
+				"$": {},
+				"$text": "2025-02-06",
+				"$children": []
+			}
+		},
+		"FahrtStartEnde": {
+			"$name": "FahrtStartEnde",
+			"$": {},
+			"$text": "",
+			"$children": [
+				{
+					"$name": "StartHaltID",
+					"$": {},
+					"$text": "ODEG_900170004",
+					"$children": []
+				},
+				{
+					"$name": "Startzeit",
+					"$": {},
+					"$text": "2025-02-06T21:01:00+01:00",
+					"$children": []
+				},
+				{
+					"$name": "EndHaltID",
+					"$": {},
+					"$text": "ODEG_900053301",
+					"$children": []
+				},
+				{
+					"$name": "Endzeit",
+					"$": {},
+					"$text": "2025-02-06T22:02:00+01:00",
+					"$children": []
+				}
+			],
+			"StartHaltID": {
+				"$name": "StartHaltID",
+				"$": {},
+				"$text": "ODEG_900170004",
+				"$children": []
+			},
+			"Startzeit": {
+				"$name": "Startzeit",
+				"$": {},
+				"$text": "2025-02-06T21:01:00+01:00",
+				"$children": []
+			},
+			"EndHaltID": {
+				"$name": "EndHaltID",
+				"$": {},
+				"$text": "ODEG_900053301",
+				"$children": []
+			},
+			"Endzeit": {
+				"$name": "Endzeit",
+				"$": {},
+				"$text": "2025-02-06T22:02:00+01:00",
+				"$children": []
+			}
+		}
+	},
+	"Komplettfahrt": {
+		"$name": "Komplettfahrt",
+		"$": {},
+		"$text": "false",
+		"$children": []
+	},
+	"BetreiberID": {
+		"$name": "BetreiberID",
+		"$": {},
+		"$text": "DB",
+		"$children": []
+	},
+	"IstHalt": {
+		"$name": "IstHalt",
+		"$": {},
+		"$text": "",
+		"$children": [
+			{
+				"$name": "HaltID",
+				"$": {},
+				"$text": "ODEG_900053301",
+				"$children": []
+			},
+			{
+				"$name": "Ankunftszeit",
+				"$": {},
+				"$text": "2025-02-06T22:02:00+01:00",
+				"$children": []
+			},
+			{
+				"$name": "AnkunftssteigText",
+				"$": {},
+				"$text": "1",
+				"$children": []
+			}
+		],
+		"HaltID": {
+			"$name": "HaltID",
+			"$": {},
+			"$text": "ODEG_900053301",
+			"$children": []
+		},
+		"Ankunftszeit": {
+			"$name": "Ankunftszeit",
+			"$": {},
+			"$text": "2025-02-06T22:02:00+01:00",
+			"$children": []
+		},
+		"AnkunftssteigText": {
+			"$name": "AnkunftssteigText",
+			"$": {},
+			"$text": "1",
+			"$children": []
+		}
+	},
+	"LinienText": {
+		"$name": "LinienText",
+		"$": {},
+		"$text": "S7",
+		"$children": []
+	},
+	"ProduktID": {
+		"$name": "ProduktID",
+		"$": {},
+		"$text": "S",
+		"$children": []
+	},
+	"PrognoseMoeglich": {
+		"$name": "PrognoseMoeglich",
+		"$": {},
+		"$text": "true",
+		"$children": []
+	},
+	"FaelltAus": {
+		"$name": "FaelltAus",
+		"$": {},
+		"$text": "true",
+		"$children": []
+	}
+}
