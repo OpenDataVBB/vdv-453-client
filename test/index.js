@@ -68,6 +68,7 @@ test('AUS IstFahrt parsing works', async (t) => {
 		Komplettfahrt: 'false',
 		UmlaufID: null,
 		PrognoseMoeglich: 'true',
+		FaelltAus: 'true',
 		FahrzeugTypID: null,
 		ServiceAttributs: [],
 		IstHalts: [
