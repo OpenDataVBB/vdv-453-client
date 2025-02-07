@@ -1,6 +1,6 @@
 # vdv-453-client
 
-A JavaScript **client for realtime public transport data systems following the [VDV-453 v2.3.2b](https://web.archive.org/web/20231208122259/https://www.vdv.de/453v2.3.2-sds.pdf.pdfx?forced=false)/[VDV-454 v1.2.2](https://web.archive.org/web/20231208122259/https://www.vdv.de/454v1.2.2-sds.pdf.pdfx?forced=false) specs** (from 2013). Such systems are widespread in Germany, being the realtime data backends (*Datendrehscheiben*) of many regional transit authorities/associations.
+A JavaScript **client for realtime public transport data systems following the [VDV-453 v2.3.2b](https://web.archive.org/web/20231208122259/https://www.vdv.de/453v2.3.2-sds.pdf.pdfx?forced=false)/[VDV-454 v2.2.1](https://web.archive.org/web/20231208122259/https://www.vdv.de/454v2.2.1-sd.pdfx?forced=true) specs** (from 2013). Such systems are widespread in Germany, being the realtime data backends (*Datendrehscheiben*) of many regional transit authorities/associations.
 
 [![npm version](https://img.shields.io/npm/v/vdv-453-client.svg)](https://www.npmjs.com/package/vdv-453-client)
 ![ISC-licensed](https://img.shields.io/github/license/OpenDataVBB/vdv-453-client.svg)
