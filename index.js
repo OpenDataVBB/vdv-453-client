@@ -1076,7 +1076,13 @@ const createClient = (cfg, opt = {}) => {
 	const httpServer = createHttpServer((req, res) => {
 		const final = () => {
 			// The `createServer()` should always have responded already, on both failures and successful handling.
-			ok(res.headersSent, `router did not handle the request (${req.method} ${req.url})`)
+			// However, we may get weird requests by the VDV API – or anyone else if the HTTP server is publicly available by accident –, so we just warn-log.
+			if (!res.headersSent) {
+				logger.warn({
+					req,
+					res,
+				}, `router did not handle the request (${req.method} ${req.url})`)
+			}
 		}
 		router(req, res, final)
 	})
