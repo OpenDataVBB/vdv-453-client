@@ -88,6 +88,7 @@ const AUS_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
 
 const SUBSCRIPTION_EXPIRED_MSG = 'subscription expired'
 const UNSUBSCRIBED_MANUALLY_MSG = 'unsubscribed manually'
+const SUBSCRIPTION_CANCELED_BY_SERVER_MSG = 'subscription canceled by the server'
 
 const waitFor = async (ms, abortSignal) => {
 	await new Promise((resolve) => {
@@ -127,6 +128,7 @@ const createClient = (cfg, opt = {}) => {
 		onSubscribed,
 		onSubscriptionExpired,
 		onSubscriptionCanceled,
+		onSubscriptionsResetByServer,
 		onSubscriptionManualFetchStarted,
 		onSubscriptionManualFetchSucceeded,
 		onSubscriptionManualFetchFailed,
@@ -161,6 +163,7 @@ const createClient = (cfg, opt = {}) => {
 		onSubscribed: (svc, {aboId, aboSubTag, aboSubChildren}, bestaetigung, subStats) => {},
 		onSubscriptionExpired: (svc, {aboId, aboSubTag, aboSubChildren}, subStats) => {},
 		onSubscriptionCanceled: (svc, {aboId, aboSubTag, aboSubChildren}, reason, subStats) => {},
+		onSubscriptionsResetByServer: (svc, subStats) => {},
 		onSubscriptionManualFetchStarted: (svc, {aboId, aboSubTag, aboSubChildren}) => {},
 		onSubscriptionManualFetchSucceeded: (svc, {aboId, aboSubTag, aboSubChildren}, {timePassed}) => {},
 		onSubscriptionManualFetchFailed: (svc, {aboId, aboSubTag, aboSubChildren}) => {},
@@ -192,6 +195,8 @@ const createClient = (cfg, opt = {}) => {
 	// ----------------------------------
 
 	const startDienstZst = getZst()
+	const latestServerStartDienstZsts = new Map() // service -> latest known (parsed!) StartDienstZst
+	const latestServerDatenVersionIDs = new Map() // service -> latest known DatenVersionID
 
 	// Technically, we don't need globally unique subscription IDs.
 	// > 5.1.1 Überblick
@@ -284,22 +289,29 @@ const createClient = (cfg, opt = {}) => {
 				assertStatusAntwortOk(el, logCtx)
 				const datenBereit = el.DatenBereit?.$text?.trim() === 'true'
 				const startDienstZst = el.StartDienstZst?.$text || null
+				const datenVersionID = el.DatenVersionID?.$text || null
 				logger.debug({
 					...logCtx,
 					datenBereit,
 					startDienstZst,
+					datenVersionID,
 				}, 'received StatusAntwort')
 
 				await onStatusAntwort(service, el)
 
-				// todo: check server's `StartDienstZst` and compare it with our `startDienstZst`
-				// > 5.1.8.3 ClientStatusAnfrage
-				// > […]
-				// > […] oder [der Server] setzt den StartDienstZst in seiner StatusAntwort auf die aktuelle Zeit und erzwingt somit die Neuinitialisierung des Clients. […]
+				try {
+					await _checkServerStatusAntwort(service, el)
+				} catch (err) {
+					logger.warn({
+						...logCtx,
+						err,
+					}, `failed to check server StatusAntwort: ${err.message}`)
+				}
 
 				return {
 					datenBereit,
 					startDienstZst,
+					datenVersionID,
 					statusAntwort: el,
 				}
 			}
@@ -316,9 +328,82 @@ const createClient = (cfg, opt = {}) => {
 			res,
 		)
 	}
-	// todo: send StatusAnfrage periodically, to detect client & server hiccups
-	// > Verliert der Server seine Abonnement-Daten, so ist dies zunächst vom Client aus nicht fest- stellbar. DatenBereitAnfragen bleiben zwar aus, aber dies kann nicht vom normalen Betrieb unterschieden und somit der Absturz des Servers nicht festgestellt werden. Um diesen Fall zu erkennen, sind zusätzliche, zyklische Anfragen vom Typ StatusAnfrage (5.1.8.1) zum Server zu senden. Innerhalb der StatusAntwort (5.1.8.2) gibt der Server den Zeitstempel des Dienststarts an. Fand der Dienststart nach der Einrichtung der Abonnements statt, so muss vom Verlust der Abonnements ausgegangen werden. Es ist nun zu verfahren wie beim Client-Datenverlust: Löschen und Neueinrichtung aller Abonnements.
-	// todo: what happens if the client discovers that the server has active subscriptions that the client doesn't know about? if the client is the single instance subscribing, it should provide a way to delete such stale/"stray" subscriptions
+
+	// > 5.1.7 Wiederaufsetzen nach Absturz
+	// > […]
+	// > Verliert der Server seine Abonnement-Daten, so ist dies zunächst vom Client aus nicht feststellbar. DatenBereitAnfragen bleiben zwar aus, aber dies kann nicht vom normalen Betrieb unterschieden und somit der Absturz des Servers nicht festgestellt werden. Um diesen Fall zu erkennen, sind zusätzliche, zyklische Anfragen vom Typ StatusAnfrage (5.1.8.1) zum Server zu senden. Innerhalb der StatusAntwort (5.1.8.2) gibt der Server den Zeitstempel des Dienststarts an. Fand der Dienststart nach der Einrichtung der Abonnements statt, so muss vom Verlust der Abonnements ausgegangen werden. Es ist nun zu verfahren wie beim Client-Datenverlust: Löschen und Neueinrichtung aller Abonnements.
+	// > […]
+	// > 5.1.8 Alive-Handling
+	// > […]
+	// > 5.1.8.2 Antwort (StatusAntwort, Status)
+	// > Sobald der Server in einer StatusAntwort einen aktualisierten Wert von StartDienstZst und DatenVersionID mitteilt (oder DatenVersionID vom System noch nicht unterstützt wird), muss der Client davon ausgehen, dass der Server-Dienst neu gestartet wurde und die Datenversorgung inkl. der Abonnements verloren gegangen ist.
+	// > Wenn der Server eine neue Datenversion signalisieren will, muss er dies dem Client durch eine gleichzeitige Aktualisierung von StartDienstZst und DatenVersionID mitteilen.
+	// > Sobald der Server in einer StatusAntwort einen aktualisierten Wert des StartDienstZst mitteilt, die DatenVersionID jedoch unverändert bleibt, kann der Client davon ausgehen, dass der Server-Dienst neu gestartet wurde, die bestehende Datenversorgung inkl. der Abonnement aber weiterhin vorliegt. Der Client muss die auf diesen Dienst bezogenen Daten und Abonnements daher *nicht* löschen. Eine Erneuerung der Abonnements und neu Abrufen der Daten ist in dem Fall nicht notwendig.
+	const _checkServerStatusAntwort = async (service, statusAntwort) => {
+		const startDienstZst = statusAntwort.StartDienstZst?.$text || null
+		ok(startDienstZst !== null, 'missing StatusAntwort.StartDienstZst')
+		const tStartDienstZst = Date.parse(startDienstZst)
+		ok(Number.isInteger(tStartDienstZst), 'StatusAntwort.StartDienstZst not parsable as ISO 8601')
+
+		const datenVersionID = statusAntwort.DatenVersionID?.$text || null
+		ok(datenVersionID !== null, 'missing StatusAntwort.DatenVersionID')
+
+		const logCtx = {
+			service,
+			tStartDienstZst,
+			datenVersionID,
+		}
+
+		if (!latestServerStartDienstZsts.has(service)) {
+			logger.trace({
+				...logCtx,
+				tStartDienstZst,
+			}, 'previously unknown server StartDienstZst')
+			latestServerStartDienstZsts.set(service, tStartDienstZst)
+			return;
+		}
+		if (!latestServerDatenVersionIDs.has(service)) {
+			logger.trace({
+				...logCtx,
+				tStartDienstZst,
+			}, 'previously unknown server DatenVersionID')
+			latestServerDatenVersionIDs.set(service, datenVersionID)
+			return;
+		}
+
+		const prevTStartDienstZst = latestServerStartDienstZsts.get(service)
+		const prevDatenVersionID = latestServerDatenVersionIDs.get(service)
+		if (tStartDienstZst !== prevTStartDienstZst) {
+			logger.trace({
+				...logCtx,
+				prevTStartDienstZst,
+			}, 'server StartDienstZst has changed')
+		}
+		if (datenVersionID !== prevDatenVersionID) {
+			logger.trace({
+				...logCtx,
+				prevDatenVersionID,
+			}, 'server DatenVersionID has changed')
+		}
+
+		const subscriptionsReset = tStartDienstZst !== prevTStartDienstZst && datenVersionID !== prevDatenVersionID
+		latestServerStartDienstZsts.set(service, tStartDienstZst)
+		latestServerDatenVersionIDs.set(service, datenVersionID)
+
+		if (subscriptionsReset) {
+			logger.info({
+				...logCtx,
+				prevTStartDienstZst,
+				prevDatenVersionID,
+			}, 'server StartDienstZst and DatenVersionID have changed')
+
+			for (const aboId of subscriptions[service].keys()) {
+				_abortSubscription(service, aboId, SUBSCRIPTION_CANCELED_BY_SERVER_MSG)
+			}
+
+			await onSubscriptionsResetByServer(service, _getSubStats(service))
+		}
+	}
 
 	// ----------------------------------
 

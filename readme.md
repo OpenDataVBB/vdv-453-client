@@ -426,6 +426,7 @@ into the following JSON tree.
 - `onSubscribed`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}, bestaetigung, subStats) => {}`
 - `onSubscriptionExpired`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}, subStats) => {}`
 - `onSubscriptionCanceled`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}, reason, subStats) => {}`
+- `onSubscriptionsResetByServer`: a function with the signature `async (service, subStats) => {}`
 - `onSubscriptionManualFetchStarted`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}) => {}`
 - `onSubscriptionManualFetchSucceeded`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}, {timePassed}) => {}`
 - `onSubscriptionManualFetchFailed`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}) => {}`
