@@ -87,6 +87,7 @@ const DFI_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
 const AUS_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
 
 const SUBSCRIPTION_EXPIRED_MSG = 'subscription expired'
+const UNSUBSCRIBED_MANUALLY_MSG = 'unsubscribed manually'
 
 const waitFor = async (ms, abortSignal) => {
 	await new Promise((resolve) => {
@@ -349,6 +350,19 @@ const createClient = (cfg, opt = {}) => {
 		}
 	}
 
+	const _getSubStats = (service) => ({
+		nrOfSubscriptions: subscriptions[service].size,
+	})
+
+	const _abortSubscription = (service, aboId, reason) => {
+		const subscriptionAbortController = subscriptions[service].get(aboId)
+		ok(subscriptionAbortController, `invalid abo ID "${aboId}" for service ${service}`)
+
+		// Note: We delete from `subscriptions` before abort()-ing.
+		subscriptions[service].delete(aboId)
+		subscriptionAbortController.abort(reason)
+	}
+
 	// subscriptionAbortController -> timer
 	const _expirationTimersBySubAbortController = new WeakMap()
 	const _subscribe = async (service, aboSubChildren, expiresAt, fetchNewDataUntilNoMoreAvailable, fetchInterval) => {
@@ -379,10 +393,6 @@ const createClient = (cfg, opt = {}) => {
 			aboSubChildren,
 		}, 'subscribing to items')
 
-		const getSubStats = () => ({
-			nrOfSubscriptions: subscriptions[service].size,
-		})
-
 		const aboParams = [
 			x(aboSubTag, {
 				AboID: aboId,
@@ -400,10 +410,10 @@ const createClient = (cfg, opt = {}) => {
 		// on abort, call hooks
 		subscriptionAbortController.signal.addEventListener('abort', () => {
 			if (subscriptionAbortController.signal.reason === SUBSCRIPTION_EXPIRED_MSG) {
-				onSubscriptionExpired(service, logCtx, getSubStats())
+				onSubscriptionExpired(service, logCtx, _getSubStats(service))
 				?.catch(() => {}) // silence errors
 			} else {
-				onSubscriptionCanceled(service, logCtx, subscriptionAbortController.signal.reason, getSubStats())
+				onSubscriptionCanceled(service, logCtx, subscriptionAbortController.signal.reason, _getSubStats(service))
 				?.catch(() => {}) // silence errors
 			}
 		})
@@ -413,9 +423,7 @@ const createClient = (cfg, opt = {}) => {
 		{
 			const expireSubClientSide = () => {
 				logger.trace(logCtx, 'expiring subscription client-side')
-				// Note: We delete from `subscriptions` before abort()-ing.
-				subscriptions[service].delete(aboId)
-				subscriptionAbortController.abort(SUBSCRIPTION_EXPIRED_MSG)
+				_abortSubscription(service, aboId, SUBSCRIPTION_EXPIRED_MSG)
 			}
 
 			const expirationTimer = setTimeout(expireSubClientSide, expiresIn)
@@ -442,7 +450,7 @@ const createClient = (cfg, opt = {}) => {
 			service,
 			aboParams,
 		)
-		await onSubscribed(service, logCtx, bestaetigung, getSubStats())
+		await onSubscribed(service, logCtx, bestaetigung, _getSubStats(service))
 
 		if (fetchSubscriptionsDataPeriodically) {
 			ok(Number.isInteger(fetchInterval), 'fetchInterval must be an integer')
@@ -541,9 +549,7 @@ const createClient = (cfg, opt = {}) => {
 			if (!abortController) {
 				continue
 			}
-			// Note: We delete from `subscriptions` before abort()-ing.
-			subscriptions[service].delete(aboId)
-			abortController.abort('unsubscribed manually')
+			_abortSubscription(service, aboId, UNSUBSCRIBED_MANUALLY_MSG)
 		}
 		logger.debug(logCtx, 'successfully unsubscribed from subscriptions')
 	}
@@ -563,10 +569,8 @@ const createClient = (cfg, opt = {}) => {
 		)
 		logCtx.bestaetigung = bestaetigung
 
-		for (const [aboId, abortController] of subscriptions[service].entries()) {
-			// Note: We delete from `subscriptions` before abort()-ing.
-			subscriptions[service].delete(aboId)
-			abortController.abort('unsubscribed manually')
+		for (const aboId of subscriptions[service].keys()) {
+			_abortSubscription(service, aboId, UNSUBSCRIBED_MANUALLY_MSG)
 		}
 		logger.debug(logCtx, 'successfully unsubscribed from all subscriptions')
 	}
