@@ -101,9 +101,10 @@ const waitFor = async (ms, abortSignal) => {
 	})
 }
 
-// This implementation follows the VDV 453 spec, as documented in the "VDV-453 Ist-Daten-Schnittstelle – Version 2.6.1" document. It also supports the VDV 454 extension, as documented in the "VDV-454 Ist-Daten-Schnittstelle – Fahrplanauskunft – Version 2.2.1".
-// https://web.archive.org/web/20231208122259/https://www.vdv.de/vdv-schrift-453-v2.6.1-de.pdfx?forced=true
-// https://web.archive.org/web/20231208122259/https://www.vdv.de/454v2.2.1-sd.pdfx?forced=true
+// This implementation follows the VDV 453 spec, as documented in the "VDV-453 Ist-Daten-Schnittstelle – Version 2.4" document. It also supports the VDV 454 extension, as documented in the "VDV-454 Ist-Daten-Schnittstelle – Fahrplanauskunft – Version 2.0".
+// https://web.archive.org/web/20240221234602/https://www.vdv.de/453v24-sds.pdfx?forced=false
+// https://web.archive.org/web/20240222010651/https://www.vdv.de/454v2.0-sd.pdfx?forced=false
+// https://web.archive.org/web/20231205141847/https://www.vdv.de/vdv453-incl-454-v2015.a-ohne-siri-20150630.zipx?forced=true
 // see also https://web.archive.org/web/20231208122259/https://www.vdv.de/i-d-s-downloads.aspx
 
 const createClient = (cfg, opt = {}) => {
