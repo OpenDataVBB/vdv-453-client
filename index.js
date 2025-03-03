@@ -189,7 +189,10 @@ const createClient = (cfg, opt = {}) => {
 		...cfg,
 		logger: requestsLogger,
 	}, opt)
-	const {router, errorHandler} = createServer(cfg, opt)
+	const {router, errorHandler} = createServer({
+		...cfg,
+		logger: requestsLogger,
+	}, opt)
 
 	// todo: serve basic information about the service on /
 
