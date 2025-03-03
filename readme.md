@@ -168,6 +168,7 @@ A client instance can be created by calling `createClient()`. This object is ref
 	- `logger`: used for general log messages; must be [pino](https://getpino.io/)-compatible
 	- `requestsLogger`: used for logging HTTP requests/responses; must be [pino](https://getpino.io/)-compatible
 	- `fetchSubscriptionsDataPeriodically`: if subscriptions' data should be fetched *manually* periodically, regardless of wether the server proactively reports new data using `DatenBereitAnfrage`s – default: `true`
+	- `datenAbrufenMaxIterations`: When fetching all new data from the server, the maximum number of fetch iterations. The number of items per iterations depends on the server.
 	- `on*()`: hooks for debug logging, keeping metrics, etc. (see the "Hooks" section)
 
 ### `client.httpServer`

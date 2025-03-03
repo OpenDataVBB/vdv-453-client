@@ -122,6 +122,7 @@ const createClient = (cfg, opt = {}) => {
 		logger,
 		requestsLogger,
 		fetchSubscriptionsDataPeriodically,
+		datenAbrufenMaxIterations,
 		onDatenBereitAnfrage,
 		onClientStatusAnfrage,
 		onStatusAntwort,
@@ -156,6 +157,8 @@ const createClient = (cfg, opt = {}) => {
 		// Some VDV-453 systems may not notify us about new/changed data (see _handleDatenBereitAnfrage), so we fetch the data "manually" periodically.
 		// todo [breaking]: default to false
 		fetchSubscriptionsDataPeriodically: true,
+		// When fetching all new data from the server, the maximum number of fetch iterations. The number of items per iterations depends on the server.
+		datenAbrufenMaxIterations: 300,
 		// hooks for debugging/metrics/etc.
 		onDatenBereitAnfrage: (svc, datenBereitAnfrage) => {},
 		onClientStatusAnfrage: (svc, clientStatusAnfrage) => {},
@@ -794,7 +797,6 @@ const createClient = (cfg, opt = {}) => {
 	// > 5.1.4.1 Datenübertragung anfordern (DatenAbrufenAnfrage)
 	// > Wurde bereits eine DatenAbrufenAnfrage vom Client an den Server versandt, so ist für diese vom Client eine DatenAbrufenAntwort abzuwarten (Antwort, oder Timeout), bevor erneut eine DatenAbrufenAnfrage versandt wird. Es wird daher empfohlen keine weitere DatenAbrufenAnfrage zu stellen, solange noch eine DatenAbrufenAnfrage aktiv ist.
 	const WEITERE_DATEN = 'WeitereDaten'
-	const DATEN_ABRUFEN_MAX_ITERATIONS = 300
 
 	// We need to fetch data in >1 pages. For better consumer ergonomics, we expose it as *one* async iterable. We also want to process each response's body iteratively. Effectively, by using async iteration, we signal "backpressure" to the response parsing code.
 	// However, `yield*` (and the non-async-iterable `await`) with recursive function calls prevents Node.js from garbage-collecting allocations of the caller. [0]
@@ -839,7 +841,7 @@ const createClient = (cfg, opt = {}) => {
 			datensatzAlle,
 			abortController,
 		} = opt
-		if (itLevel >= DATEN_ABRUFEN_MAX_ITERATIONS) {
+		if (itLevel >= datenAbrufenMaxIterations) {
 			// todo: throw more specific error?
 			// todo [breaking]: "recursions" -> "iterations"
 			const err = new Error(`${service}: too many recursions while fetching data`)
