@@ -239,9 +239,6 @@ const createClient = (cfg, opt = {}) => {
 			logCtx.clientStatusAnfrage = clientStatusAnfrage
 			logger.debug(logCtx, 'received ClientStatusAnfrage')
 
-			// todo: expose value of `StartDienstZst` child?
-			// todo: expose value of `DatenVersionID` child?
-
 			res.respondWithResponse({
 				ok: true, // todo: are we ever not okay?
 				status: true, // send Status element
@@ -258,6 +255,15 @@ const createClient = (cfg, opt = {}) => {
 			})
 
 			await onClientStatusAnfrage(service, clientStatusAnfrage)
+
+			try {
+				await _checkClientStatusAnfrage(service, clientStatusAnfrage)
+			} catch (err) {
+				logger.warn({
+					...logCtx,
+					err,
+				}, `failed to check ClientStatusAnfrage: ${err.message}`)
+			}
 		})
 	}
 
@@ -339,14 +345,9 @@ const createClient = (cfg, opt = {}) => {
 	// > Sobald der Server in einer StatusAntwort einen aktualisierten Wert von StartDienstZst und DatenVersionID mitteilt (oder DatenVersionID vom System noch nicht unterstützt wird), muss der Client davon ausgehen, dass der Server-Dienst neu gestartet wurde und die Datenversorgung inkl. der Abonnements verloren gegangen ist.
 	// > Wenn der Server eine neue Datenversion signalisieren will, muss er dies dem Client durch eine gleichzeitige Aktualisierung von StartDienstZst und DatenVersionID mitteilen.
 	// > Sobald der Server in einer StatusAntwort einen aktualisierten Wert des StartDienstZst mitteilt, die DatenVersionID jedoch unverändert bleibt, kann der Client davon ausgehen, dass der Server-Dienst neu gestartet wurde, die bestehende Datenversorgung inkl. der Abonnement aber weiterhin vorliegt. Der Client muss die auf diesen Dienst bezogenen Daten und Abonnements daher *nicht* löschen. Eine Erneuerung der Abonnements und neu Abrufen der Daten ist in dem Fall nicht notwendig.
-	const _checkServerStatusAntwort = async (service, statusAntwort) => {
-		const startDienstZst = statusAntwort.StartDienstZst?.$text || null
-		ok(startDienstZst !== null, 'missing StatusAntwort.StartDienstZst')
+	const _checkStartDienstZstAndDatenVersionID = async (service, startDienstZst, datenVersionID) => {
 		const tStartDienstZst = Date.parse(startDienstZst)
-		ok(Number.isInteger(tStartDienstZst), 'StatusAntwort.StartDienstZst not parsable as ISO 8601')
-
-		const datenVersionID = statusAntwort.DatenVersionID?.$text || null
-		ok(datenVersionID !== null, 'missing StatusAntwort.DatenVersionID')
+		ok(Number.isInteger(tStartDienstZst), 'StartDienstZst not parsable as ISO 8601')
 
 		const logCtx = {
 			service,
@@ -403,6 +404,23 @@ const createClient = (cfg, opt = {}) => {
 
 			await onSubscriptionsResetByServer(service, _getSubStats(service))
 		}
+	}
+	const _checkServerStatusAntwort = async (service, statusAntwort) => {
+		const startDienstZst = statusAntwort.StartDienstZst?.$text || null
+		ok(startDienstZst !== null, 'missing StatusAntwort.StartDienstZst')
+		const datenVersionID = statusAntwort.DatenVersionID?.$text || null
+		ok(datenVersionID !== null, 'missing StatusAntwort.DatenVersionID')
+
+		await _checkStartDienstZstAndDatenVersionID(service, startDienstZst, datenVersionID)
+	}
+	const _checkClientStatusAnfrage = async (service, clientStatusAfrage) => {
+		console.error('clientStatusAfrage', clientStatusAfrage)
+		const startDienstZst = clientStatusAfrage.StartDienstZst?.$text || null
+		ok(startDienstZst !== null, 'missing ClientStatusAnfrage.StartDienstZst')
+		const datenVersionID = clientStatusAfrage.DatenVersionID?.$text || null
+		ok(datenVersionID !== null, 'missing ClientStatusAnfrage.DatenVersionID')
+
+		await _checkStartDienstZstAndDatenVersionID(service, startDienstZst, datenVersionID)
 	}
 
 	// ----------------------------------
