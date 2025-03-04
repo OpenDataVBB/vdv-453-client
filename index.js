@@ -460,17 +460,90 @@ const createClient = (cfg, opt = {}) => {
 		}
 	}
 
-	const _getSubStats = (service) => ({
-		nrOfSubscriptions: subscriptions[service].size,
+	const _getSubStats = async (service) => ({
+		nrOfSubscriptions: (await storage.keys(STORAGE_PREFIX_SUBSCRIPTIONS + service + ':')).length,
 	})
 
-	const _abortSubscription = (service, aboId, reason) => {
-		const subscriptionAbortController = subscriptions[service].get(aboId)
+	const _abortSubscription = async (service, aboId, reason) => {
+		const subscriptionAbortController = subscriptionAbortControllers[service].get(aboId)
 		ok(subscriptionAbortController, `invalid abo ID "${aboId}" for service ${service}`)
 
 		// Note: We delete from `subscriptions` before abort()-ing.
-		subscriptions[service].delete(aboId)
+		await storage.del(STORAGE_PREFIX_SUBSCRIPTIONS + service + ':' + aboId)
+		subscriptionAbortControllers[service].delete(aboId)
 		subscriptionAbortController.abort(reason)
+	}
+
+	const _ensureSubscriptionWillExpire = async (service, aboId, expiresIn) => {
+		const logCtx = {
+			service,
+			aboId,
+		}
+
+		const subscriptionAbortController = new AbortController()
+
+		// on abort, call hooks
+		const markSubscriptionAsExpiredOrCanceled = async () => {
+			const subStats = _getSubStats(service)
+			try {
+				if (subscriptionAbortController.signal.reason === SUBSCRIPTION_EXPIRED_MSG) {
+					await onSubscriptionExpired(service, logCtx, subStats)
+				} else {
+					await onSubscriptionCanceled(service, logCtx, subscriptionAbortController.signal.reason, subStats)
+				}
+			} catch (err) {
+				// silence errors
+			}
+		}
+		subscriptionAbortController.signal.addEventListener('abort', () => {
+			markSubscriptionAsExpiredOrCanceled()
+			.catch((err) => {
+				logger.warn({
+					...logCtx,
+					err,
+				}, `failed to mark subscription as expired or canceled: ${err.message}`)
+			})
+		})
+
+		// expiration timer fires -> abort subscription
+		// subscription aborted externally -> clear expiration timer
+		{
+			const expireSubClientSide = () => {
+				logger.trace(logCtx, 'expiring subscription client-side')
+				_abortSubscription(service, aboId, SUBSCRIPTION_EXPIRED_MSG)
+				.catch((err) => {
+					logger.warn({
+						...logCtx,
+						err,
+					}, `failed to expire subscription client-side: ${err.message}`)
+				})
+			}
+
+			// todo: persist timer across restarts?
+			const expirationTimer = setTimeout(expireSubClientSide, expiresIn)
+			expirationTimer.unref() // todo: is this correct?
+			_expirationTimersBySubAbortController.set(subscriptionAbortController, expirationTimer)
+
+			// clear expiration timer on external subscription abort
+			// If the subscription got aborted externally (i.e. not because it has expired but for some other reason), we should clear the timeout.
+			// todo: Also, we clear the subscription abort listener as soon as the expiration timer fires.
+			{
+				const cancelExpirationTimer = () => {
+					logger.trace(logCtx, `subscription aborted client-side: "${subscriptionAbortController.signal.reason}"`)
+
+					// de-listen self, a.k.a. once()
+					subscriptionAbortController.signal.removeEventListener('abort', cancelExpirationTimer)
+
+					const expirationTimer = _expirationTimersBySubAbortController.get(subscriptionAbortController)
+					clearTimeout(expirationTimer)
+				}
+				subscriptionAbortController.signal.addEventListener('abort', cancelExpirationTimer)
+			}
+		}
+
+		return {
+			subscriptionAbortController,
+		}
 	}
 
 	// subscriptionAbortController -> timer
@@ -511,55 +584,20 @@ const createClient = (cfg, opt = {}) => {
 			}, aboSubChildren)
 		]
 
-		const subscriptionAbortController = new AbortController()
 		// keep track of the subscription using the `aboID`
 		// We do this before sending the request because we might crash while the request is in-flight.
 		// todo: do this after the request has been sent?
 		subscriptions[service].set(aboId, subscriptionAbortController)
 
-		// on abort, call hooks
-		subscriptionAbortController.signal.addEventListener('abort', () => {
-			if (subscriptionAbortController.signal.reason === SUBSCRIPTION_EXPIRED_MSG) {
-				onSubscriptionExpired(service, logCtx, _getSubStats(service))
-				?.catch(() => {}) // silence errors
-			} else {
-				onSubscriptionCanceled(service, logCtx, subscriptionAbortController.signal.reason, _getSubStats(service))
-				?.catch(() => {}) // silence errors
-			}
-		})
-
-		// expiration timer fires -> abort subscription
-		// subscription aborted externally -> clear expiration timer
-		{
-			const expireSubClientSide = () => {
-				logger.trace(logCtx, 'expiring subscription client-side')
-				_abortSubscription(service, aboId, SUBSCRIPTION_EXPIRED_MSG)
-			}
-
-			const expirationTimer = setTimeout(expireSubClientSide, expiresIn)
-			expirationTimer.unref() // todo: is this correct?
-			_expirationTimersBySubAbortController.set(subscriptionAbortController, expirationTimer)
-
-			// clear expiration timer on external subscription abort
-			// todo: Also, we clear the subscription abort listener as soon as the expiration timer fires.
-			{
-				const cancelExpirationTimer = () => {
-					logger.trace(logCtx, `subscription aborted client-side: "${subscriptionAbortController.signal.reason}"`)
-
-					// de-listen self, a.k.a. once()
-					subscriptionAbortController.signal.removeEventListener('abort', cancelExpirationTimer)
-
-					const expirationTimer = _expirationTimersBySubAbortController.get(subscriptionAbortController)
-					clearTimeout(expirationTimer)
-				}
-				subscriptionAbortController.signal.addEventListener('abort', cancelExpirationTimer)
-			}
-		}
-
 		const bestaetigung = await _sendAboAnfrage(
 			service,
 			aboParams,
 		)
+
+		const {
+			subscriptionAbortController,
+		} = await _ensureSubscriptionWillExpire(service, aboId, expiresIn)
+
 		await onSubscribed(service, logCtx, bestaetigung, _getSubStats(service))
 
 		if (fetchSubscriptionsDataPeriodically) {
