@@ -387,10 +387,10 @@ const createClient = (cfg, opt = {}) => {
 			}, 'server StartDienstZst and DatenVersionID have changed')
 
 			for (const aboId of subscriptions[service].keys()) {
-				_abortSubscription(service, aboId, SUBSCRIPTION_CANCELED_BY_SERVER_MSG)
+				await _abortSubscription(service, aboId, SUBSCRIPTION_CANCELED_BY_SERVER_MSG)
 			}
 
-			await onSubscriptionsResetByServer(service, _getSubStats(service))
+			await onSubscriptionsResetByServer(service, await _getSubStats(service))
 		}
 	}
 	const _checkServerStatusAntwort = async (service, statusAntwort) => {
@@ -442,8 +442,11 @@ const createClient = (cfg, opt = {}) => {
 		}
 	}
 
+	const _nrOfSubscriptions = async (service) => {
+		return (await storage.keys(STORAGE_PREFIX_SUBSCRIPTIONS + service + ':')).length
+	}
 	const _getSubStats = async (service) => ({
-		nrOfSubscriptions: (await storage.keys(STORAGE_PREFIX_SUBSCRIPTIONS + service + ':')).length,
+		nrOfSubscriptions: await _nrOfSubscriptions(service),
 	})
 
 	const _abortSubscription = async (service, aboId, reason) => {
@@ -466,7 +469,7 @@ const createClient = (cfg, opt = {}) => {
 
 		// on abort, call hooks
 		const markSubscriptionAsExpiredOrCanceled = async () => {
-			const subStats = _getSubStats(service)
+			const subStats = await _getSubStats(service)
 			try {
 				if (subscriptionAbortController.signal.reason === SUBSCRIPTION_EXPIRED_MSG) {
 					await onSubscriptionExpired(service, logCtx, subStats)
@@ -580,7 +583,7 @@ const createClient = (cfg, opt = {}) => {
 			subscriptionAbortController,
 		} = await _ensureSubscriptionWillExpire(service, aboId, expiresIn)
 
-		await onSubscribed(service, logCtx, bestaetigung, _getSubStats(service))
+		await onSubscribed(service, logCtx, bestaetigung, await _getSubStats(service))
 
 		if (fetchSubscriptionsDataPeriodically) {
 			ok(Number.isInteger(fetchInterval), 'fetchInterval must be an integer')
@@ -679,7 +682,7 @@ const createClient = (cfg, opt = {}) => {
 			if (!abortController) {
 				continue
 			}
-			_abortSubscription(service, aboId, UNSUBSCRIBED_MANUALLY_MSG)
+			await _abortSubscription(service, aboId, UNSUBSCRIBED_MANUALLY_MSG)
 		}
 		logger.debug(logCtx, 'successfully unsubscribed from subscriptions')
 	}
@@ -700,15 +703,18 @@ const createClient = (cfg, opt = {}) => {
 		logCtx.bestaetigung = bestaetigung
 
 		for (const aboId of subscriptions[service].keys()) {
-			_abortSubscription(service, aboId, UNSUBSCRIBED_MANUALLY_MSG)
+			await _abortSubscription(service, aboId, UNSUBSCRIBED_MANUALLY_MSG)
 		}
 		logger.debug(logCtx, 'successfully unsubscribed from all subscriptions')
 	}
 
 	const unsubscribeAllOwned = async () => {
-		await Promise.all(Object.entries(subscriptions).map(async ([service, subs]) => {
-			const aboIds = Array.from(subs.keys())
-			if (aboIds.length === 0) return;
+		const _subscriptions = Object.create(null)
+		for (const [service, subs] in Object.entries(subscriptions)) {
+			_subscriptions[service] = Array.from(subs.keys())
+		}
+
+		await Promise.all(Object.entries(_subscriptions).map(async ([service, aboIds]) => {
 			await _unsubscribe(service, aboIds, true)
 		}))
 	}
@@ -734,7 +740,7 @@ const createClient = (cfg, opt = {}) => {
 			maxIterations: String(maxIterations), // pino cannot serialize Infinity :/
 		}
 
-		if (subscriptions[service].size === 0) { // 0 subscriptions on `service`
+		if ((await _nrOfSubscriptions(service)) === 0) { // 0 subscriptions on `service`
 			logger.trace(logCtx, `not starting to fetch new ${service} data again, because there are no subscriptions (anymore)`)
 			return;
 		}
@@ -779,7 +785,7 @@ const createClient = (cfg, opt = {}) => {
 				service,
 			}
 
-			if (subscriptions[service].size === 0) { // 0 subscriptions on `service`
+			if ((await _nrOfSubscriptions(service)) === 0) { // 0 subscriptions on `service`
 				logger.warn(logCtx, 'received DatenBereitAnfrage, even though we don\'t know about a subscription')
 				res.respondWithResponse({
 					ok: false,
