@@ -200,24 +200,6 @@ const createClient = (cfg, opt = {}) => {
 
 	// ----------------------------------
 
-	const startDienstZst = getZst()
-	const latestServerStartDienstZsts = new Map() // service -> latest known (parsed!) StartDienstZst
-	const latestServerDatenVersionIDs = new Map() // service -> latest known DatenVersionID
-
-	// Technically, we don't need globally unique subscription IDs.
-	// > 5.1.1 Überblick
-	// > Eine AboID ist innerhalb eines jeden Dienstes eindeutig.
-	const getNextAboId = () => String(10000 + Math.round(Math.random() * 9999))
-	// todo: "Wird eine AboAnfrage mit einer AboID gestellt und es existiert bereits ein Abonnement unter dieser Bezeichnung, so wird das bestehende Abonnement überschrieben." – warn about this? does it apply across services?
-	// todo: persist AboIDs across client restarts, reinstate fetch timers after restarts? – transactions (or locking as a fallback) will be necessary to guarantee consistent client behaviour (start transaction, set up subscription, upon success persist AboId, commit transaction)
-	// service -> AboID -> subscriptionAbortController
-	const subscriptions = Object.fromEntries(
-		SERVICES.map(svc => [svc, new Map()]),
-	)
-
-	// todo: make configurable with a decent UX
-	const datensatzAlle = false
-
 	// todo: move to lib/server.js?
 	const _onRequest = (service, call, handleRequest) => {
 		const path = '/' + [
@@ -987,6 +969,26 @@ const createClient = (cfg, opt = {}) => {
 			itControl.continue = true
 		}
 	}
+
+	// ----------------------------------
+
+	const startDienstZst = getZst()
+	const latestServerStartDienstZsts = new Map() // service -> latest known (parsed!) StartDienstZst
+	const latestServerDatenVersionIDs = new Map() // service -> latest known DatenVersionID
+
+	// Technically, we don't need globally unique subscription IDs.
+	// > 5.1.1 Überblick
+	// > Eine AboID ist innerhalb eines jeden Dienstes eindeutig.
+	const getNextAboId = () => String(10000 + Math.round(Math.random() * 9999))
+	// todo: "Wird eine AboAnfrage mit einer AboID gestellt und es existiert bereits ein Abonnement unter dieser Bezeichnung, so wird das bestehende Abonnement überschrieben." – warn about this? does it apply across services?
+	// todo: persist AboIDs across client restarts, reinstate fetch timers after restarts? – transactions (or locking as a fallback) will be necessary to guarantee consistent client behaviour (start transaction, set up subscription, upon success persist AboId, commit transaction)
+	// service -> AboID -> subscriptionAbortController
+	const subscriptions = Object.fromEntries(
+		SERVICES.map(svc => [svc, new Map()]),
+	)
+
+	// todo: make configurable with a decent UX
+	const datensatzAlle = false
 
 	// ----------------------------------
 
