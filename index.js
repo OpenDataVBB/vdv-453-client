@@ -1241,6 +1241,8 @@ const createClient = (cfg, opt = {}) => {
 					req,
 					res,
 				}, `router did not handle the request (${req.method} ${req.url})`)
+				res.statusCode = 404
+				res.end()
 			}
 		}
 		router(req, res, final)
