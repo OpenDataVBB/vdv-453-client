@@ -84,7 +84,7 @@ const {
 	dfiUnsubscribe,
 	ausSubscribe,
 	ausUnsubscribe,
-} = createVdv453Client({
+} = await createVdv453Client({
 	leitstelle: LEITSTELLE,
 	theirLeitstelle: THEIR_LEITSTELLE,
 	endpoint: ENDPOINT,
@@ -158,7 +158,7 @@ data.on('aus:IstFahrt', (istFahrt) => {
 > [!TIP]
 > The `REF-AUS` & `AUS` services are defined in VDV-454. All other services are defined in VDV-453.
 
-A client instance can be created by calling `createClient()`. This object is referred to as `client` below.
+A client instance can be created by calling the async function `createClient()`. This object is referred to as `client` below.
 
 `createClient()` takes the following arguments:
 1. `cfg`: an object with these fields:

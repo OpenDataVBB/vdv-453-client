@@ -19,7 +19,7 @@ const runClient = async (cfg) => {
 
 	const {
 		httpServer,
-	} = createClient({
+	} = await createClient({
 		leitstelle,
 		endpoint,
 		logger,

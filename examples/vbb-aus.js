@@ -29,7 +29,7 @@ const {
 	data,
 	ausSubscribe,
 	unsubscribeAllOwned,
-} = createClient({
+} = await createClient({
 	leitstelle: LEITSTELLE,
 	theirLeitstelle: THEIR_LEITSTELLE,
 	endpoint: ENDPOINT,
