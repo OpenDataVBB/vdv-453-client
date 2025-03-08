@@ -571,13 +571,18 @@ const createClient = (cfg, opt = {}) => {
 
 		// keep track of the subscription using the `aboID`
 		// We do this before sending the request because we might crash while the request is in-flight.
-		// todo: do this after the request has been sent?
 		subscriptions[service].set(aboId, subscriptionAbortController)
 
-		const bestaetigung = await _sendAboAnfrage(
-			service,
-			aboParams,
-		)
+		let bestaetigung
+		try {
+			bestaetigung = await _sendAboAnfrage(
+				service,
+				aboParams,
+			)
+		} catch (err) {
+			subscriptions[service].delete(aboId)
+			throw err
+		}
 
 		const {
 			subscriptionAbortController,
