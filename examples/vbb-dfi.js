@@ -30,7 +30,7 @@ const {
 	data,
 	dfiSubscribe,
 	dfiUnsubscribe,
-} = createClient({
+} = await createClient({
 	leitstelle: LEITSTELLE,
 	endpoint: ENDPOINT,
 })

@@ -6,6 +6,7 @@ import {EventEmitter} from 'node:events'
 import {createServer as createHttpServer} from 'node:http'
 import {x} from 'xastscript'
 import {CLIENT_CALLS, SERVER_CALLS, ALL_CALLS} from './lib/calls.js'
+import {openInMemoryStorage} from './lib/in-memory-storage.js'
 import {
 	createSendRequest,
 	BESTAETIGUNG,
@@ -78,6 +79,7 @@ const DATEN_ABRUFEN_ANTWORT_ROOT_SUB_TAGS_BY_SERVICE = new Map([
 const SECOND = 1000
 const MINUTE = 60 * SECOND
 const HOUR = 60 * MINUTE
+const DAY = 24 * HOUR
 
 // > When delay is larger than 2147483647 or less than 1, the delay will be set to 1. Non-integer delays are truncated to an integer.
 // https://nodejs.org/docs/latest-v20.x/api/timers.html#settimeoutcallback-delay-args
@@ -89,6 +91,18 @@ const AUS_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
 const SUBSCRIPTION_EXPIRED_MSG = 'subscription expired'
 const UNSUBSCRIBED_MANUALLY_MSG = 'unsubscribed manually'
 const SUBSCRIPTION_CANCELED_BY_SERVER_MSG = 'subscription canceled by the server'
+
+const STORAGE_TTL_STARTDIENSTZST = 3 * DAY
+const STORAGE_KEY_STARTDIENSTZST = 'startdienstzst'
+
+const STORAGE_TTL_SERVER_STATE = 3 * DAY
+// $STORAGE_PREFIX_LATEST_SERVER_STARTDIENSTZST:$service -> latest known (parsed!) StartDienstZst
+const STORAGE_PREFIX_LATEST_SERVER_STARTDIENSTZST = 'server-latest-startdienstzst:'
+// $STORAGE_PREFIX_LATEST_SERVER_DATENVERSIONID:$service -> latest known DatenVersionID
+const STORAGE_PREFIX_LATEST_SERVER_DATENVERSIONID = 'server-latest-datenversionid:'
+
+// $STORAGE_PREFIX_SUBSCRIPTIONS:$service:$aboID -> expiresAt
+const STORAGE_PREFIX_SUBSCRIPTIONS = 'subs:'
 
 const waitFor = async (ms, abortSignal) => {
 	await new Promise((resolve) => {
@@ -108,7 +122,7 @@ const waitFor = async (ms, abortSignal) => {
 // https://web.archive.org/web/20231205141847/https://www.vdv.de/vdv453-incl-454-v2015.a-ohne-siri-20150630.zipx?forced=true
 // see also https://web.archive.org/web/20231208122259/https://www.vdv.de/i-d-s-downloads.aspx
 
-const createClient = (cfg, opt = {}) => {
+const createClient = async (cfg, opt = {}) => {
 	const {
 		leitstelle,
 		theirLeitstelle,
@@ -123,6 +137,7 @@ const createClient = (cfg, opt = {}) => {
 		requestsLogger,
 		fetchSubscriptionsDataPeriodically,
 		datenAbrufenMaxIterations,
+		openStorage,
 		onDatenBereitAnfrage,
 		onClientStatusAnfrage,
 		onStatusAntwort,
@@ -159,6 +174,7 @@ const createClient = (cfg, opt = {}) => {
 		fetchSubscriptionsDataPeriodically: true,
 		// When fetching all new data from the server, the maximum number of fetch iterations. The number of items per iterations depends on the server.
 		datenAbrufenMaxIterations: 300,
+		openStorage: openInMemoryStorage,
 		// hooks for debugging/metrics/etc.
 		onDatenBereitAnfrage: (svc, datenBereitAnfrage) => {},
 		onClientStatusAnfrage: (svc, clientStatusAnfrage) => {},
@@ -185,7 +201,10 @@ const createClient = (cfg, opt = {}) => {
 		logger,
 	}
 
-	const sendRequest = createSendRequest({
+	const {
+		remoteEndpointId,
+		sendRequest,
+	} = createSendRequest({
 		...cfg,
 		logger: requestsLogger,
 	}, opt)
@@ -343,25 +362,33 @@ const createClient = (cfg, opt = {}) => {
 			datenVersionID,
 		}
 
-		if (!latestServerStartDienstZsts.has(service)) {
+		if (!await storage.has(STORAGE_PREFIX_LATEST_SERVER_STARTDIENSTZST + service)) {
 			logger.trace({
 				...logCtx,
 				tStartDienstZst,
 			}, 'previously unknown server StartDienstZst')
-			latestServerStartDienstZsts.set(service, tStartDienstZst)
+			await storage.set(
+				STORAGE_PREFIX_LATEST_SERVER_STARTDIENSTZST + service,
+				String(tStartDienstZst),
+				STORAGE_TTL_SERVER_STATE,
+			)
 			return;
 		}
-		if (!latestServerDatenVersionIDs.has(service)) {
+		if (!await storage.has(STORAGE_PREFIX_LATEST_SERVER_DATENVERSIONID + service)) {
 			logger.trace({
 				...logCtx,
 				tStartDienstZst,
 			}, 'previously unknown server DatenVersionID')
-			latestServerDatenVersionIDs.set(service, datenVersionID)
+			await storage.set(
+				STORAGE_PREFIX_LATEST_SERVER_DATENVERSIONID + service,
+				datenVersionID,
+				STORAGE_TTL_SERVER_STATE,
+			)
 			return;
 		}
 
-		const prevTStartDienstZst = latestServerStartDienstZsts.get(service)
-		const prevDatenVersionID = latestServerDatenVersionIDs.get(service)
+		const prevTStartDienstZst = parseInt(await storage.get(STORAGE_PREFIX_LATEST_SERVER_STARTDIENSTZST + service))
+		const prevDatenVersionID = await storage.get(STORAGE_PREFIX_LATEST_SERVER_DATENVERSIONID + service)
 		if (tStartDienstZst !== prevTStartDienstZst) {
 			logger.trace({
 				...logCtx,
@@ -376,8 +403,16 @@ const createClient = (cfg, opt = {}) => {
 		}
 
 		const subscriptionsReset = tStartDienstZst !== prevTStartDienstZst && datenVersionID !== prevDatenVersionID
-		latestServerStartDienstZsts.set(service, tStartDienstZst)
-		latestServerDatenVersionIDs.set(service, datenVersionID)
+		await storage.set(
+			STORAGE_PREFIX_LATEST_SERVER_STARTDIENSTZST + service,
+			String(tStartDienstZst),
+			STORAGE_TTL_SERVER_STATE,
+		)
+		await storage.set(
+			STORAGE_PREFIX_LATEST_SERVER_DATENVERSIONID + service,
+			datenVersionID,
+			STORAGE_TTL_SERVER_STATE,
+		)
 
 		if (subscriptionsReset) {
 			logger.info({
@@ -386,11 +421,13 @@ const createClient = (cfg, opt = {}) => {
 				prevDatenVersionID,
 			}, 'server StartDienstZst and DatenVersionID have changed')
 
-			for (const aboId of subscriptions[service].keys()) {
+			for await (const {aboId} of _readSubscriptions(service)) {
 				await _abortSubscription(service, aboId, SUBSCRIPTION_CANCELED_BY_SERVER_MSG)
 			}
 
 			await onSubscriptionsResetByServer(service, await _getSubStats(service))
+
+			// todo: silently recreate all subscriptions? or leave this to the caller?
 		}
 	}
 	const _checkServerStatusAntwort = async (service, statusAntwort) => {
@@ -443,7 +480,11 @@ const createClient = (cfg, opt = {}) => {
 	}
 
 	const _nrOfSubscriptions = async (service) => {
-		return (await storage.keys(STORAGE_PREFIX_SUBSCRIPTIONS + service + ':')).length
+		let _nr = 0
+		for await (const _ of _readSubscriptions(service)) {
+			_nr++
+		}
+		return _nr
 	}
 	const _getSubStats = async (service) => ({
 		nrOfSubscriptions: await _nrOfSubscriptions(service),
@@ -459,6 +500,30 @@ const createClient = (cfg, opt = {}) => {
 		subscriptionAbortController.abort(reason)
 	}
 
+	const _readSubscriptions = async function* (service = null, readExpiresAt = false) {
+		const prefix = STORAGE_PREFIX_SUBSCRIPTIONS + (service === null ? '' : service + ':')
+		const entries = await storage[readExpiresAt ? 'entries' : 'keys'](prefix)
+		for (const entry of entries) {
+			const key = readExpiresAt ? entry[0] : entry
+			const val = readExpiresAt ? entry[1] : null
+
+			const [_, service, aboId] = key.split(':')
+			const expiresAt = readExpiresAt ? parseInt(val) : null
+			yield {service, aboId, expiresAt}
+		}
+	}
+
+	const getAllSubscriptions = async () => {
+		const _subscriptions = Object.create(null)
+		for await (const {service, aboId, expiresAt} of _readSubscriptions(null, true)) {
+			if (!(service in _subscriptions)) {
+				_subscriptions[service] = new Map()
+			}
+			_subscriptions[service].set(aboId, expiresAt)
+		}
+		return _subscriptions
+	}
+
 	const _ensureSubscriptionWillExpire = async (service, aboId, expiresIn) => {
 		const logCtx = {
 			service,
@@ -466,6 +531,7 @@ const createClient = (cfg, opt = {}) => {
 		}
 
 		const subscriptionAbortController = new AbortController()
+		subscriptionAbortControllers[service].set(aboId, subscriptionAbortController)
 
 		// on abort, call hooks
 		const markSubscriptionAsExpiredOrCanceled = async () => {
@@ -504,7 +570,6 @@ const createClient = (cfg, opt = {}) => {
 				})
 			}
 
-			// todo: persist timer across restarts?
 			const expirationTimer = setTimeout(expireSubClientSide, expiresIn)
 			expirationTimer.unref() // todo: is this correct?
 			_expirationTimersBySubAbortController.set(subscriptionAbortController, expirationTimer)
@@ -571,7 +636,7 @@ const createClient = (cfg, opt = {}) => {
 
 		// keep track of the subscription using the `aboID`
 		// We do this before sending the request because we might crash while the request is in-flight.
-		subscriptions[service].set(aboId, subscriptionAbortController)
+		await storage.set(STORAGE_PREFIX_SUBSCRIPTIONS + service + ':' + aboId, String(expiresAt), expiresIn)
 
 		let bestaetigung
 		try {
@@ -580,7 +645,7 @@ const createClient = (cfg, opt = {}) => {
 				aboParams,
 			)
 		} catch (err) {
-			subscriptions[service].delete(aboId)
+			await storage.del(STORAGE_PREFIX_SUBSCRIPTIONS + service + ':' + aboId)
 			throw err
 		}
 
@@ -683,7 +748,7 @@ const createClient = (cfg, opt = {}) => {
 		}
 
 		for (const aboId of aboIds) {
-			const abortController = subscriptions[service].get(aboId)
+			const abortController = subscriptionAbortControllers[service].get(aboId)
 			if (!abortController) {
 				continue
 			}
@@ -707,7 +772,7 @@ const createClient = (cfg, opt = {}) => {
 		)
 		logCtx.bestaetigung = bestaetigung
 
-		for (const aboId of subscriptions[service].keys()) {
+		for await (const {aboId} of _readSubscriptions(service)) {
 			await _abortSubscription(service, aboId, UNSUBSCRIBED_MANUALLY_MSG)
 		}
 		logger.debug(logCtx, 'successfully unsubscribed from all subscriptions')
@@ -715,8 +780,12 @@ const createClient = (cfg, opt = {}) => {
 
 	const unsubscribeAllOwned = async () => {
 		const _subscriptions = Object.create(null)
-		for (const [service, subs] in Object.entries(subscriptions)) {
-			_subscriptions[service] = Array.from(subs.keys())
+		for await (const {service, aboId} of _readSubscriptions()) {
+			if (!(service in _subscriptions)) {
+				_subscriptions[service] = [aboId]
+			} else {
+				_subscriptions[service].push(aboId)
+			}
 		}
 
 		await Promise.all(Object.entries(_subscriptions).map(async ([service, aboIds]) => {
@@ -983,9 +1052,18 @@ const createClient = (cfg, opt = {}) => {
 
 	// ----------------------------------
 
-	const startDienstZst = getZst()
-	const latestServerStartDienstZsts = new Map() // service -> latest known (parsed!) StartDienstZst
-	const latestServerDatenVersionIDs = new Map() // service -> latest known DatenVersionID
+	const storage = await openStorage({
+		remoteEndpointId,
+	})
+
+	let startDienstZst = getZst()
+	{
+		if (await storage.has(STORAGE_KEY_STARTDIENSTZST)) {
+			startDienstZst = await storage.get(STORAGE_KEY_STARTDIENSTZST)
+		} else {
+			await storage.set(STORAGE_KEY_STARTDIENSTZST, startDienstZst, STORAGE_TTL_STARTDIENSTZST)
+		}
+	}
 
 	// Technically, we don't need globally unique subscription IDs.
 	// > 5.1.1 Überblick
@@ -994,9 +1072,32 @@ const createClient = (cfg, opt = {}) => {
 	// todo: "Wird eine AboAnfrage mit einer AboID gestellt und es existiert bereits ein Abonnement unter dieser Bezeichnung, so wird das bestehende Abonnement überschrieben." – warn about this? does it apply across services?
 	// todo: persist AboIDs across client restarts, reinstate fetch timers after restarts? – transactions (or locking as a fallback) will be necessary to guarantee consistent client behaviour (start transaction, set up subscription, upon success persist AboId, commit transaction)
 	// service -> AboID -> subscriptionAbortController
-	const subscriptions = Object.fromEntries(
+	const subscriptionAbortControllers = Object.fromEntries(
 		SERVICES.map(svc => [svc, new Map()]),
 	)
+
+	{
+		for await (const {service, aboId, expiresAt} of _readSubscriptions(null, true)) {
+			logger.trace({
+				service,
+				aboId,
+				expiresAt,
+			}, 're-activating persisted subscription')
+			const expiresIn = expiresAt - Date.now()
+			await _ensureSubscriptionWillExpire(service, aboId, expiresIn)
+
+			// todo: call onSubscribed? or split into onSubscriptionCreated() & onSubscriptionRestored()?
+		}
+	}
+
+	logger.trace({
+		startDienstZst,
+		// pino doesn't seem to support `Map`s, so we convert them
+		aboIdsByService: Object.fromEntries(
+			Object.entries(subscriptionAbortControllers)
+			.map(([svc, map]) => [svc, map.keys()]),
+		),
+	}, 'initial state')
 
 	// todo: make configurable with a decent UX
 	const datensatzAlle = false
@@ -1252,11 +1353,13 @@ const createClient = (cfg, opt = {}) => {
 		}
 		router(req, res, final)
 	})
+
 	return {
 		logger,
 		sendRequest,
 		httpServer,
 		data,
+		getAllSubscriptions,
 		dfiSubscribe,
 		dfiUnsubscribe,
 		dfiUnsubscribeAll,
