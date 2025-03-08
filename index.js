@@ -737,9 +737,10 @@ const createClient = async (cfg, opt = {}) => {
 			)
 			logCtx.bestaetigung = bestaetigung
 		} catch (err) {
-			if (silenceSubscriptionNotFoundError) {
-				const match = /zu löschenden Abonnements (\d+(, \d+)?) wurden nicht gefunden/i.exec(err.message)
-				if (match && match[1]) {
+			const match = /zu löschenden Abonnements (\d+(, \d+)?) wurden nicht gefunden/i.exec(err.message)
+			if (match && match[1]) {
+				err.isSubscriptionNotFoundError = true
+				if (silenceSubscriptionNotFoundError) {
 					logCtx.notFoundAboIds = match[1].split(', ')
 					return;
 				}
