@@ -141,6 +141,7 @@ const createClient = async (cfg, opt = {}) => {
 		onDatenBereitAnfrage,
 		onClientStatusAnfrage,
 		onStatusAntwort,
+		onServerXSDVersionID,
 		onSubscribed,
 		onSubscriptionExpired,
 		onSubscriptionCanceled,
@@ -179,6 +180,7 @@ const createClient = async (cfg, opt = {}) => {
 		onDatenBereitAnfrage: (svc, datenBereitAnfrage) => {},
 		onClientStatusAnfrage: (svc, clientStatusAnfrage) => {},
 		onStatusAntwort: (svc, statusAntwort) => {},
+		onServerXSDVersionID: (svc, xsdVersionID) => {},
 		onSubscribed: (svc, {aboId, aboSubTag, aboSubChildren}, bestaetigung, subStats) => {},
 		onSubscriptionExpired: (svc, {aboId, aboSubTag, aboSubChildren}, subStats) => {},
 		onSubscriptionCanceled: (svc, {aboId, aboSubTag, aboSubChildren}, reason, subStats) => {},
@@ -463,20 +465,38 @@ const createClient = async (cfg, opt = {}) => {
 			aboParams,
 		)
 
+		let result = null
+
 		const tags = parseResponse([
+			{tag: 'AboAntwort', preserve: true}, // todo: remove
 			{tag: BESTAETIGUNG, preserve: true},
 		])
 		for await (const el of tags) {
 			const tag = el.$name
+
+			// > 5.1.2.2 Abonnementsbestätigung (AboAntwort)
+			// > […]
+			// > Mit dem optionalen Element XSDVersionID in AboAnfrage und AboAntwort tauschen Client und Server die Versionskennung der Schnittstelle aus, die jeder von ihnen verwendet. Damit können beide Seiten Kompatibilitätsprüfungen vornehmen. Die aktuelle Version ist im XML-Schema im Attribut Version angegeben (Dateiname des XSD-Files, z.B. `xsd_2015a`).
+			if (tag === 'AboAntwort') {
+				const xsdVersionID = el.$.XSDVersionID ?? null
+				if (xsdVersionID !== null) {
+					await onServerXSDVersionID(service, xsdVersionID)
+				}
+				continue
+			}
+
 			if (tag === BESTAETIGUNG) {
 				assertBestaetigungOk(el)
 				// todo: warn if DatenGueltigBis < aboParams.VerfallZst?
 				// > (optional) Ende des Datenhorizontes des Datenproduzenten. Entfällt, wenn Anfrage vollständig im Datenhorizont liegt.
 				// todo: add hook onAboAntwort()?
-				return el
+				result = el
+				continue
 			}
 			// todo: otherwise warn-log unexpected tag?
 		}
+
+		return result
 	}
 
 	const _nrOfSubscriptions = async (service) => {
