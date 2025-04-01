@@ -14,6 +14,7 @@ import {
 } from './lib/send-request.js'
 import {createServer} from './lib/server.js'
 import {SERVICES} from './lib/services.js'
+import {isProgrammerError} from './lib/is-programmer-error.js'
 import {getZst} from './lib/zst.js'
 import {parseAusIstFahrt} from './lib/parse-aus-istfahrt.js'
 
@@ -556,20 +557,37 @@ const createClient = async (cfg, opt = {}) => {
 		// on abort, call hooks
 		const markSubscriptionAsExpiredOrCanceled = async () => {
 			const subStats = await _getSubStats(service)
-			try {
-				if (subscriptionAbortController.signal.reason === SUBSCRIPTION_EXPIRED_MSG) {
+			if (subscriptionAbortController.signal.reason === SUBSCRIPTION_EXPIRED_MSG) {
+				try {
 					await onSubscriptionExpired(service, logCtx, subStats)
-				} else {
-					await onSubscriptionCanceled(service, logCtx, subscriptionAbortController.signal.reason, subStats)
+				} catch (err) {
+					logger.warn({
+						...logCtx,
+						subStats,
+					}, 'onSubscriptionExpired() hook failed')
+					if (isProgrammerError(err)) {
+						throw err
+					}
 				}
-			} catch (err) {
-				// silence errors
+			} else {
+				try {
+					await onSubscriptionCanceled(service, logCtx, subscriptionAbortController.signal.reason, subStats)
+				} catch (err) {
+					logger.warn({
+						...logCtx,
+						abortReason: subscriptionAbortController.signal.reason,
+						subStats,
+					}, 'onSubscriptionCanceled() hook failed')
+					if (isProgrammerError(err)) {
+						throw err
+					}
+				}
 			}
 		}
 		subscriptionAbortController.signal.addEventListener('abort', () => {
 			markSubscriptionAsExpiredOrCanceled()
 			.catch((err) => {
-				logger.warn({
+				logger.error({
 					...logCtx,
 					err,
 				}, `failed to mark subscription as expired or canceled: ${err.message}`)
