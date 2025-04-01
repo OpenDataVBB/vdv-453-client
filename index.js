@@ -143,7 +143,8 @@ const createClient = async (cfg, opt = {}) => {
 		onClientStatusAnfrage,
 		onStatusAntwort,
 		onServerXSDVersionID,
-		onSubscribed,
+		onSubscriptionCreated,
+		onSubscriptionRestored,
 		onSubscriptionExpired,
 		onSubscriptionCanceled,
 		onSubscriptionsResetByServer,
@@ -182,7 +183,7 @@ const createClient = async (cfg, opt = {}) => {
 		onClientStatusAnfrage: (svc, clientStatusAnfrage) => {},
 		onStatusAntwort: (svc, statusAntwort) => {},
 		onServerXSDVersionID: (svc, xsdVersionID) => {},
-		onSubscribed: (svc, {aboId, aboSubTag, aboSubChildren}, bestaetigung, subStats) => {},
+		onSubscriptionCreated: (svc, {aboId, expiresAt, aboSubTag, aboSubChildren}, bestaetigung, subStats) => {},
 		onSubscriptionRestored: (svc, {aboId, expiresAt}) => {},
 		onSubscriptionExpired: (svc, {aboId, aboSubTag, aboSubChildren}, subStats) => {},
 		onSubscriptionCanceled: (svc, {aboId, aboSubTag, aboSubChildren}, reason, subStats) => {},
@@ -692,7 +693,17 @@ const createClient = async (cfg, opt = {}) => {
 			subscriptionAbortController,
 		} = await _ensureSubscriptionWillExpire(service, aboId, expiresIn)
 
-		await onSubscribed(service, logCtx, bestaetigung, await _getSubStats(service))
+		await onSubscriptionCreated(
+			service,
+			{
+				aboId,
+				expiresAt,
+				aboSubTag,
+				aboSubChildren,
+			},
+			bestaetigung,
+			await _getSubStats(service),
+		)
 
 		if (fetchSubscriptionsDataPeriodically) {
 			ok(Number.isInteger(fetchInterval), 'fetchInterval must be an integer')
