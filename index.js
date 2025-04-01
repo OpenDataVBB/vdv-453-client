@@ -183,6 +183,7 @@ const createClient = async (cfg, opt = {}) => {
 		onStatusAntwort: (svc, statusAntwort) => {},
 		onServerXSDVersionID: (svc, xsdVersionID) => {},
 		onSubscribed: (svc, {aboId, aboSubTag, aboSubChildren}, bestaetigung, subStats) => {},
+		onSubscriptionRestored: (svc, {aboId, expiresAt}) => {},
 		onSubscriptionExpired: (svc, {aboId, aboSubTag, aboSubChildren}, subStats) => {},
 		onSubscriptionCanceled: (svc, {aboId, aboSubTag, aboSubChildren}, reason, subStats) => {},
 		onSubscriptionsResetByServer: (svc, subStats) => {},
@@ -1125,7 +1126,7 @@ const createClient = async (cfg, opt = {}) => {
 			const expiresIn = expiresAt - Date.now()
 			await _ensureSubscriptionWillExpire(service, aboId, expiresIn)
 
-			// todo: call onSubscribed? or split into onSubscriptionCreated() & onSubscriptionRestored()?
+			await onSubscriptionRestored(service, {aboId, expiresAt})
 		}
 	}
 

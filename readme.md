@@ -426,6 +426,7 @@ into the following JSON tree.
 - `onStatusAntwort`: a function with the signature `async (service, statusAntwort) => {}`
 - `onServerXSDVersionID`: a function with the signatur `async (service, xsdVersionID) => {}`
 - `onSubscribed`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}, bestaetigung, subStats) => {}`
+- `onSubscriptionRestored`: a function with the signature `async (svc, {aboId, expiresAt}) => {}`
 - `onSubscriptionExpired`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}, subStats) => {}`
 - `onSubscriptionCanceled`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}, reason, subStats) => {}`
 - `onSubscriptionsResetByServer`: a function with the signature `async (service, subStats) => {}`
