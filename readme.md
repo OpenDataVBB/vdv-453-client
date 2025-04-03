@@ -82,6 +82,8 @@ const {
 	data,
 	dfiSubscribe,
 	dfiUnsubscribe,
+	refAusSubscribe,
+	refAusUnsubscribe,
 	ausSubscribe,
 	ausUnsubscribe,
 } = await createVdv453Client({
@@ -139,6 +141,12 @@ data.on('dfi:AZBNachricht', (azbNachricht) => {
 	console.log(azbNachricht)
 })
 
+// subscribe to VDV-454 REF-AUS service
+const {aboId: refAusAboId} = await refAusSubscribe({
+	expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes from now
+})
+unsubscribeTasks.push(() => refAusUnsubscribe(refAusAboId))
+
 // subscribe to VDV-454 AUS service
 const {aboId: ausAboId} = await ausSubscribe({
 	expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes from now
@@ -192,6 +200,17 @@ Arguments:
 Arguments:
 1. `azbNachricht` – The whole `DFI` `AZBNachricht`, usually containing many `AZBFahrplanlage`s, `AZBFahrtLoeschen`s, etc.
 
+#### event `raw:ausref:Linienfahrplan`
+
+Arguments:
+1. `linienfahrplan` – The whole `AUS-REF` `Linienfahrplan` (child of an `AUSNachricht`), usually containing several `SollFahrt`s.
+
+#### event `raw:ausref:SollFahrt`
+
+Arguments:
+1. `sollFahrt` – The raw `AUS-REF` `SollFahrt`s, each part of `linienfahrplan`.
+2. `linienfahrplan` – The raw `AUS-REF` `Linienfahrplan` (child of an `AUSNachricht`) containing `sollFahrt`.
+
 #### event `raw:aus:AUSNachricht`
 
 Arguments:
@@ -240,6 +259,36 @@ Sends a VDV-453 `StatusAnfrage` to the server, to obtain information about the s
 - `datenBereit` (boolean): If the server has new `DFI` data to be fetched by the client.
 - `startDienstZst` (ISO 8601 string or `null`): When the server's `DFI` service has been started.
 - `statusAntwort` (object): The whole response's `StatusAntwort` element.
+
+### `client.refAusSubscribe()`
+
+`refAusSubscribe(opt = {})` is an async function that takes the following arguments:
+
+1. `opt` (optional): An object whose fields override the following defaults:
+	- `expiresAt`: `Date.now() + REF_AUS_DEFAULT_SUBSCRIPTION_TTL`
+	- `validFrom`: `Date.now()` – Start of the time frame to get plan data for. The plan data will include those `SollFahrt`s whose first departure is within the time frame.
+	- `validUntil`: `validFrom + REF_AUS_DEFAULT_SUBSCRIPTION_TTL` – End of the time frame to get plan data for.
+	- `fetchInterval`: `300_000` (in milliseconds)
+
+After subscribing successfully, it will return an object with the following fields:
+
+- `aboId`: The ID that represents the subscription. It can be used to unsubscribe.
+
+### `client.refAusFetchData()`
+
+Works like `client.dfiFetchData()`, except for `REF-AUS`.
+
+### `client.refAusUnsubscribe()`
+
+Works like `client.dfiUnsubscribe()`, except for `REF-AUS`.
+
+### `client.refAusUnsubscribeAll()`
+
+Works like `client.dfiUnsubscribeAll()`, except for `REF-AUS`.
+
+### `client.refAusCheckServerStatus()`
+
+Works like `client.dfiCheckServerStatus()`, except for `REF-AUS`.
 
 ### `client.ausSubscribe()`
 
@@ -437,6 +486,9 @@ into the following JSON tree.
 - `onDataFetchStarted`: a function with the signature `async (service, {datensatzAlle}) => {}`
 - `onDataFetchSucceeded`: a function with the signature `async (service, {datensatzAlle}, {nrOfFetches, timePassed}) => {}`
 - `onDataFetchFailed`: a function with the signature `async (service, {datensatzAlle}, err, {nrOfFetches, timePassed}) => {}`
+- `onRefAusFetchStarted`: a function with the signature `async ({datensatzAlle}) => {}`
+- `onRefAusFetchSucceeded`: a function with the signature `async ({datensatzAlle}, {nrOfSollFahrts}) => {}`
+- `onRefAusFetchFailed`: a function with the signature `async ({datensatzAlle}, err, {nrOfSollFahrts}) => {}`
 - `onAusFetchStarted`: a function with the signature `async ({datensatzAlle}) => {}`
 - `onAusFetchSucceeded`: a function with the signature `async ({datensatzAlle}, {nrOfIstFahrts}) => {}`
 - `onAusFetchFailed`: a function with the signature `async ({datensatzAlle}, err, {nrOfIstFahrts}) => {}`

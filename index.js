@@ -27,8 +27,8 @@ const {
 	// VIS,
 	// > Dieser Dienst wird derzeit nicht von der VBB Datendrehscheibe unterstützt.
 	// AND,
+	REF_AUS,
 	AUS,
-	// REF_AUS,
 } = SERVICES
 const {
 	STATUS,
@@ -53,8 +53,8 @@ const {
 const ABO_ANFRAGE_ROOT_SUB_TAGS_BY_SERVICE = new Map([
 	[DFI, 'AboAZB'],
 	// [REF_DFI, 'AboAZBRef'],
+	[REF_AUS, 'AboAUSRef'],
 	[AUS, 'AboAUS'],
-	// [REF_AUS, 'AboAUSRef'],
 ])
 
 // > 5.1.4.2 Daten übertragen (DatenAbrufenAntwort)
@@ -72,9 +72,11 @@ const ABO_ANFRAGE_ROOT_SUB_TAGS_BY_SERVICE = new Map([
 const DATEN_ABRUFEN_ANTWORT_ROOT_SUB_TAGS_BY_SERVICE = new Map([
 	[DFI, 'AZBNachricht'],
 	// [REF_DFI, 'AZBNachricht'],
-	// todo: rather pick AUSNachricht children (FahrtVerband, Linienfahrplan, SollUmlauf, IstFahrt, IstUmlauf, GesAnschluss)? – AUSNachricht has ~500kb of children, so this would lead to smaller XML trees being read into memory
+	// Because a single AUSNachricht may have (unpredictably) much data (with the VBB API it usually is at most ~1mb, but we can't rely on that), we only parse its children (i.e. Linienfahrplan) into XML trees.
+	// todo:
+	// > Falls ein Datenlieferant eine DatenAbrufenAnfrage erhält, die Daten aber noch nicht bereit hat, soll eine leere DatenAbrufenAntwort (das verpflichtende Element Bestaetigung ist enthalten, das optionale Element AUSNachricht fehlt jedoch) gesendet werden. Der Datenkonsument darf in diesem Fall keine Rückschlüsse auf irgendwelche Linienfahrpläne ziehen, weil die Antwort darüber nichts aussagt.
+	[REF_AUS, 'Linienfahrplan'], // Linienfahrplan is a child of AUSNachricht
 	[AUS, 'AUSNachricht'],
-	// [REF_AUS, 'AUSNachricht'],
 ])
 
 const SECOND = 1000
@@ -87,6 +89,7 @@ const DAY = 24 * HOUR
 const SETTIMEOUT_MAX_DELAY = 2147483647
 
 const DFI_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
+const REF_AUS_DEFAULT_SUBSCRIPTION_TTL = 1 * DAY
 const AUS_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
 
 const SUBSCRIPTION_EXPIRED_MSG = 'subscription expired'
@@ -154,6 +157,9 @@ const createClient = async (cfg, opt = {}) => {
 		onDataFetchStarted,
 		onDataFetchSucceeded,
 		onDataFetchFailed,
+		onRefAusFetchStarted,
+		onRefAusFetchSucceeded,
+		onRefAusFetchFailed,
 		onAusFetchStarted,
 		onAusFetchSucceeded,
 		onAusFetchFailed,
@@ -192,6 +198,9 @@ const createClient = async (cfg, opt = {}) => {
 		onDataFetchStarted: (svc, {datensatzAlle}) => {},
 		onDataFetchSucceeded: (svc, {datensatzAlle}, {nrOfFetches, timePassed}) => {},
 		onDataFetchFailed: (svc, {datensatzAlle}, err, {nrOfFetches, timePassed}) => {},
+		onRefAusFetchStarted: ({datensatzAlle}) => {},
+		onRefAusFetchSucceeded: ({datensatzAlle}, {nrOfSollFahrts}) => {},
+		onRefAusFetchFailed: ({datensatzAlle}, err, {nrOfSollFahrts}) => {},
 		onAusFetchStarted: ({datensatzAlle}) => {},
 		onAusFetchSucceeded: ({datensatzAlle}, {nrOfIstFahrts}) => {},
 		onAusFetchFailed: ({datensatzAlle}, err, {nrOfIstFahrts}) => {},
@@ -207,6 +216,7 @@ const createClient = async (cfg, opt = {}) => {
 	const datenAbrufenMaxIterations = {
 		default: 10,
 		[AUS]: 300,
+		[REF_AUS]: 1000,
 		...(opt.datenAbrufenMaxIterations ?? {}),
 	}
 
@@ -1170,7 +1180,7 @@ const createClient = async (cfg, opt = {}) => {
 	// _handleClientStatusAnfrage(VIS)
 	// _handleClientStatusAnfrage(AND)
 	_handleClientStatusAnfrage(AUS)
-	// _handleClientStatusAnfrage(REF_AUS)
+	_handleClientStatusAnfrage(REF_AUS)
 
 	// ----------------------------------
 
@@ -1258,6 +1268,132 @@ const createClient = async (cfg, opt = {}) => {
 
 	const dfiCheckServerStatus = async () => {
 		return await _sendStatusAnfrage(DFI)
+	}
+
+	// ----------------------------------
+
+	const refAusSubscribe = async (opt = {}) => {
+		const now = Date.now()
+		const {
+			expiresAt,
+			validFrom,
+
+			fetchInterval,
+		} = {
+			expiresAt: now + REF_AUS_DEFAULT_SUBSCRIPTION_TTL,
+			validFrom: now, // todo: default beginning of the day?
+
+			// todo [breaking]: rename to `manualFetchInterval`
+			fetchInterval: 300_000, // 5m
+			...opt,
+		}
+		// todo: this is dangerous, what if i set validFrom to 3 months in the past? – implement a better default?
+		const validUntil = 'validUntil' in opt
+			? opt.validUntil
+			: Math.max(validFrom, now) + REF_AUS_DEFAULT_SUBSCRIPTION_TTL
+		// todo: validate arguments
+
+		const aboSubChildren = [
+			// > 5.1.1.1 Beschränkung der Daten nach Zeitbereich (Zeitfenster)
+			// > Die Zeitpunkte in der Struktur Zeitfenster beziehen sich jeweils auf die Abfahrtszeit an der Starthaltestelle.
+			// > Definition Zeitfenster
+			// > GueltigVon: Beginn des Zeitfensters für die Solldatenübertragung.
+			// > GueltigBis: Ende des Zeitfensters für die Solldatenübertragung. – Falls das Ende einer Fahrt außerhalb des angegebenen Zeitfensters liegt, werden dennoch die Daten der ganzen Fahrt übertragen.
+			// VDV-453 spec
+			x('Zeitfenster', {}, [
+				x('GueltigVon', {}, getZst(validFrom)),
+				x('GueltigBis', {}, getZst(validUntil)),
+			]),
+			// todo: Zeitfenster
+			// todo: does LinienFilter work with REF_AUS?
+			// todo: BetreiberFilter
+			// todo: ProduktFilter
+			// todo: VekehrsmittelTextFilter
+			// todo: HaltFilter
+			// todo: UmlaufFilter
+			// todo: MitGesAnschluss
+			// todo: MitBereitsAktivenFahrten
+			// todo: MitFormation
+		]
+		return await _subscribe(
+			REF_AUS,
+			aboSubChildren,
+			expiresAt,
+			_fetchNewRefAusDataUntilNoMoreAvailable,
+			fetchInterval,
+		)
+	}
+	const refAusUnsubscribe = async (...aboIds) => {
+		return await _unsubscribe(REF_AUS, aboIds)
+	}
+	const refAusUnsubscribeAll = async () => {
+		return await _unsubscribeAll(REF_AUS)
+	}
+
+	const _fetchNewRefAusDataOnce = async (cfg) => {
+		const {
+			abortController,
+		} = cfg
+
+		const hookCtx = {
+			datensatzAlle,
+			// todo: expose if this was a manual fetch or due to DatenBereitAnfrage!
+		}
+
+		await onRefAusFetchStarted(hookCtx)
+		let nrOfSollFahrts = 0
+		try {
+			const els = _fetchDataOnce(REF_AUS, {
+				datensatzAlle,
+				abortController,
+			})
+			for await (const [linienfahrplan, ctx] of els) {
+				data.emit(`raw:${REF_AUS}:Linienfahrplan`, linienfahrplan)
+
+				for (const child of linienfahrplan.$children) {
+					// todo: handle other `Linienfahrplan` children
+					if (child.$name === 'SollFahrt') {
+						data.emit(`raw:${REF_AUS}:SollFahrt`, child, linienfahrplan)
+
+						// todo: parse & emit non-raw SollFahrts
+						nrOfSollFahrts++
+					} else {
+						// todo: warn-log?
+					}
+				}
+			}
+		} catch (err) {
+			await onRefAusFetchFailed(hookCtx, err, {
+				nrOfSollFahrts,
+			})
+			throw err
+		}
+		await onRefAusFetchSucceeded(hookCtx, {
+			nrOfSollFahrts,
+		})
+	}
+
+	// user-triggered manual fetch
+	const refAusFetchData = async (opt = {}) => {
+		const {
+			abortController,
+		} = {
+			abortController: new AbortController(),
+			...opt,
+		}
+		await _fetchNewRefAusDataOnce({
+			abortController,
+		})
+	}
+
+	// fetch triggered by the data provider, or by the subscription's manual fetch interval
+	const _fetchNewRefAusDataUntilNoMoreAvailable = async (maxIterations) => {
+		await _fetchNewDataUntilNoMoreAvailable(REF_AUS, _fetchNewRefAusDataOnce, maxIterations)
+	}
+	_handleDatenBereitAnfrage(AUS, _fetchNewRefAusDataUntilNoMoreAvailable)
+
+	const refAusCheckServerStatus = async () => {
+		return await _sendStatusAnfrage(REF_AUS)
 	}
 
 	// ----------------------------------
@@ -1424,6 +1560,11 @@ const createClient = async (cfg, opt = {}) => {
 		dfiUnsubscribeAll,
 		dfiFetchData,
 		dfiCheckServerStatus,
+		refAusSubscribe,
+		refAusUnsubscribe,
+		refAusUnsubscribeAll,
+		refAusFetchData,
+		refAusCheckServerStatus,
 		ausSubscribe,
 		ausUnsubscribe,
 		ausUnsubscribeAll,
