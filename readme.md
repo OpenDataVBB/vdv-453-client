@@ -146,6 +146,9 @@ const {aboId: refAusAboId} = await refAusSubscribe({
 	expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes from now
 })
 unsubscribeTasks.push(() => refAusUnsubscribe(refAusAboId))
+data.on('aus:SollFahrt', (sollFahrt) => {
+	console.log(sollFahrt)
+})
 
 // subscribe to VDV-454 AUS service
 const {aboId: ausAboId} = await ausSubscribe({
@@ -190,10 +193,15 @@ An [`EventEmitter`](https://nodejs.org/docs/latest-v20.x/api/events.html#class-e
 > [!NOTE]
 > The arguments of the events below, unless otherwise noted, are JSON equivalents of the XML trees sent by the server (see the [*XML to JSON mapping* section](#xml-to-json-mapping)).
 
+#### event `ausref:SollFahrt`
+
+Arguments:
+1. `sollFahrt` – The parsed `AUS` `SollFahrt`, including some fields from its `Linienfahrplan` parent.
+
 #### event `aus:IstFahrt`
 
 Arguments:
-1. `istFahrt` – The `AUS` `IstFahrt`.
+1. `istFahrt` – The parsed `AUS` `IstFahrt`.
 
 #### event `raw:dfi:AZBNachricht`
 

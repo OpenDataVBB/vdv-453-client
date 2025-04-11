@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs'
 import {Readable} from 'node:stream'
 import {strictEqual} from 'node:assert'
 import {parseTags} from '../lib/xml-parser.js'
+import {parseRefAusSollFahrt} from '../lib/parse-ref-aus-sollfahrt.js'
 import {parseAusIstFahrt} from '../lib/parse-aus-istfahrt.js'
 import {
 	kBestaetigungZst,
@@ -19,6 +20,7 @@ const VBB_DDS_AUS_DATENABRUFENANTWORT_2024_04_11 = readFileSync(
 const VBB_DDS_AUS_ISTFAHRT_2025_02_06_7610_08_8089188_210100__DB = JSON.parse(readFileSync(
 	new URL('./vbb-dds-aus-istfahrt-2025-02-06-7610-08-8089188-210100_DB.json', import.meta.url).pathname,
 ))
+import * as VBB_DDS_REF_AUS_SOLLFAHRT_2025_04_10_74046_20250410_ADD_NWB_LS_TRANSDEV from './vbb-dds-ref-aus-sollfahrt-2025-04-10-74046_20250410_ADD_NWB_LS_TRANSDEV.js'
 
 test('XML -> JSON parsing works', async (t) => {
 	const input = Readable.from(VBB_DDS_AUS_DATENABRUFENANTWORT_2024_04_11)
@@ -37,6 +39,101 @@ test('XML -> JSON parsing works', async (t) => {
 	t.equal(els[1].$name, 'WeitereDaten', 'els[1].$name')
 	t.equal(els[2].$name, 'AUSNachricht', 'els[2].$name')
 	t.equal(els[2].$children.length, 2, 'els[2].children.length')
+})
+
+test('REF-AUS SollFahrt parsing works', async (t) => {
+	const ctx = {
+		zst: '134-foo-bar',
+	}
+	const sollFahrt = parseRefAusSollFahrt(
+		VBB_DDS_REF_AUS_SOLLFAHRT_2025_04_10_74046_20250410_ADD_NWB_LS_TRANSDEV.sollFahrt,
+		VBB_DDS_REF_AUS_SOLLFAHRT_2025_04_10_74046_20250410_ADD_NWB_LS_TRANSDEV.linienfahrplan,
+		ctx,
+	)
+
+	t.equal(sollFahrt[kBestaetigungZst], ctx.zst)
+	t.deepEqual(sollFahrt, {
+		Zst: null,
+		LinienID: 'RB30',
+		RichtungsID: 'Zwickau (Sachs)',
+		ProduktID: null,
+		BetreiberID: null,
+		LinienText: 'RB30',
+		RichtungsText: 'Zwickau (Sachs) Hbf',
+		VonRichtungsText: 'Chemnitz Hbf',
+		VerkehrsmittelText: null,
+		PrognoseMoeglich: null,
+		Fahrradmitnahme: null,
+		FahrtID: {
+			FahrtBezeichner: '74046/20250410#!ADD!#NWB-LS##TRANSDEV',
+			Betriebstag: '2025-04-10',
+		},
+		UmlaufID: null,
+		LinienfahrwegID: null,
+		Zugname: null,
+		Zusatzfahrt: null,
+		FaelltAus: null,
+		FahrzeugTypID: null,
+		ServiceAttributs: [],
+		SollHalts: [
+			{
+				HaltID: 'de:14612:28:1',
+				HaltestellenName: null,
+				Abfahrtszeit: '2025-04-10T04:08:00Z',
+				AbfahrtssteigText: '7',
+				Einsteigeverbot: null,
+				Ankunftszeit: null,
+				AnkunftssteigText: null,
+				Aussteigeverbot: null,
+				Durchfahrt: null,
+				RichtungsText: null,
+				VonText: null,
+				LinienfahrwegID: null,
+			},
+			{
+				HaltID: 'de:14612:166:2',
+				HaltestellenName: null,
+				Abfahrtszeit: '2025-04-10T04:13:00Z',
+				AbfahrtssteigText: '2',
+				Einsteigeverbot: null,
+				Ankunftszeit: '2025-04-10T04:12:00Z',
+				AnkunftssteigText: null,
+				Aussteigeverbot: null,
+				Durchfahrt: null,
+				RichtungsText: null,
+				VonText: null,
+				LinienfahrwegID: null,
+			},
+			{
+				HaltID: 'de:14524:1117:1',
+				HaltestellenName: null,
+				Abfahrtszeit: '2025-04-10T06:14:00Z',
+				AbfahrtssteigText: '1',
+				Einsteigeverbot: null,
+				Ankunftszeit: null,
+				AnkunftssteigText: null,
+				Aussteigeverbot: null,
+				Durchfahrt: null,
+				RichtungsText: null,
+				VonText: null,
+				LinienfahrwegID: null,
+			},
+			{
+				HaltID: 'de:14524:41032:1',
+				HaltestellenName: null,
+				Abfahrtszeit: null,
+				AbfahrtssteigText: null,
+				Einsteigeverbot: null,
+				Ankunftszeit: '2025-04-10T06:18:00Z',
+				AnkunftssteigText: '1',
+				Aussteigeverbot: null,
+				Durchfahrt: null,
+				RichtungsText: null,
+				VonText: null,
+				LinienfahrwegID: null,
+			},
+		],
+	})
 })
 
 test('AUS IstFahrt parsing works', async (t) => {

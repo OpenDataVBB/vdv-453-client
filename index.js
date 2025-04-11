@@ -16,6 +16,10 @@ import {createServer} from './lib/server.js'
 import {SERVICES} from './lib/services.js'
 import {isProgrammerError} from './lib/is-programmer-error.js'
 import {getZst} from './lib/zst.js'
+import {
+	PARSED_LINIENFAHRPLAN_CHILDREN,
+	parseRefAusSollFahrt,
+} from './lib/parse-ref-aus-sollfahrt.js'
 import {parseAusIstFahrt} from './lib/parse-aus-istfahrt.js'
 
 const {
@@ -1355,9 +1359,10 @@ const createClient = async (cfg, opt = {}) => {
 					if (child.$name === 'SollFahrt') {
 						data.emit(`raw:${REF_AUS}:SollFahrt`, child, linienfahrplan)
 
-						// todo: parse & emit non-raw SollFahrts
+						const sollFahrt = parseRefAusSollFahrt(child, linienfahrplan, ctx)
 						nrOfSollFahrts++
-					} else {
+						data.emit(`${REF_AUS}:SollFahrt`, sollFahrt)
+					} else if (!PARSED_LINIENFAHRPLAN_CHILDREN.has(child.$name)) {
 						// todo: warn-log?
 					}
 				}
