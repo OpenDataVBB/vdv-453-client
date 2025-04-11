@@ -137,7 +137,6 @@ const createClient = async (cfg, opt = {}) => {
 		logger,
 		requestsLogger,
 		fetchSubscriptionsDataPeriodically,
-		datenAbrufenMaxIterations,
 		openStorage,
 		onDatenBereitAnfrage,
 		onClientStatusAnfrage,
@@ -175,8 +174,6 @@ const createClient = async (cfg, opt = {}) => {
 		// Some VDV-453 systems may not notify us about new/changed data (see _handleDatenBereitAnfrage), so we fetch the data "manually" periodically.
 		// todo [breaking]: default to false
 		fetchSubscriptionsDataPeriodically: true,
-		// When fetching all new data from the server, the maximum number of fetch iterations. The number of items per iterations depends on the server.
-		datenAbrufenMaxIterations: 300,
 		openStorage: openInMemoryStorage,
 		// hooks for debugging/metrics/etc.
 		onDatenBereitAnfrage: (svc, datenBereitAnfrage) => {},
@@ -204,6 +201,13 @@ const createClient = async (cfg, opt = {}) => {
 	cfg = {
 		...cfg,
 		logger,
+	}
+
+	// When fetching all new data from the server, the maximum number of fetch iterations. The number of items per iterations depends on the server.
+	const datenAbrufenMaxIterations = {
+		default: 10,
+		[AUS]: 300,
+		...(opt.datenAbrufenMaxIterations ?? {}),
 	}
 
 	const {
@@ -960,11 +964,15 @@ const createClient = async (cfg, opt = {}) => {
 	const _fetchDataOnce = async function* (service, opt) {
 		await onDataFetchStarted(service, opt)
 
+		const maxIterations = datenAbrufenMaxIterations[service] ?? datenAbrufenMaxIterations.default
+		ok(Number.isInteger(maxIterations), `opt.datenAbrufenMaxIterations[${service}] or opt.datenAbrufenMaxIterations.default must be an integer`)
+
 		let timePassed = null
 		let itLevel = 0
 		try {
 			const t0 = performance.now()
 			const itControl = {
+				maxIterations,
 				continue: false,
 			}
 			while (true) {
@@ -995,7 +1003,7 @@ const createClient = async (cfg, opt = {}) => {
 			datensatzAlle,
 			abortController,
 		} = opt
-		if (itLevel >= datenAbrufenMaxIterations) {
+		if (itLevel >= itControl.maxIterations) {
 			// todo: throw more specific error?
 			// todo [breaking]: "recursions" -> "iterations"
 			const err = new Error(`${service}: too many recursions while fetching data`)
