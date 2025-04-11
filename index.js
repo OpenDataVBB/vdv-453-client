@@ -759,7 +759,7 @@ const createClient = (cfg, opt = {}) => {
 		isFetchingData[service] = true
 		let iterations = 0
 		try {
-			while (++iterations <= maxIterations && datenBereitAnfrageReceivedWhileFetching[service]) {
+			while (++iterations <= maxIterations || datenBereitAnfrageReceivedWhileFetching[service]) {
 				datenBereitAnfrageReceivedWhileFetching[service] = false
 				// We must keep looping even with fetch failures, so we catch & log all errors.
 				try {
