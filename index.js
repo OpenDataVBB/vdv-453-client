@@ -237,18 +237,33 @@ const createClient = (cfg, opt = {}) => {
 			// todo: expose value of `StartDienstZst` child?
 			// todo: expose value of `DatenVersionID` child?
 
+			// > 5.1.8.3 ClientStatusAnfrage
+			// > Beispiel 3: Antwort des Clients: Dienst verfügbar, Client initialisiert gerade und will keine Auskunft zu den aktiven Abonnements geben:
+			// > 5.1.8.3 ClientStatusAnfrage
+			// > […]
+			// > Stellt der Server einen Unterschied zwischen seiner Abonnementliste und der Liste vom Client, kann der Server entweder stillschweigend den Unterschied beseitigen indem er die nicht aus der Clientsicht aktiven Abonnements löscht und die aus der Clientsicht aktiven Abonnements registriert und anfängt für diese Daten bereitzustellen oder er setzt den StartDienstZst in seiner StatusAntwort auf die aktuelle Zeit und erzwingt somit die Neuinitialisierung des Clients. Der zweite Weg wird empfohlen.
+			// > Ist die Struktur AktiveAbos leer, hat der Client keine aktiven Abonnements. Falls der Server doch welche kennt, sollen diese stillschweigend deaktiviert werden.
+			const respondWithSubs = clientStatusAnfrage.$.MitAbos === 'true'
+			const aktiveAbos = respondWithSubs
+				? x(
+					'AktiveAbos',
+					{},
+					Array.from(subscriptions[service].keys()).map((aboId) => {
+						return x(todo, {
+							AboID: aboId,
+							// todo: this attribute seems to be required, we need each subscription's `VerfallZst`
+							VerfallZst: todo,
+						}, []),
+					}),
+				)
+				: null
+
 			res.respondWithResponse({
 				ok: true, // todo: are we ever not okay?
 				status: true, // send Status element
 				children: [
 					x('StartDienstZst', {}, startDienstZst),
-					// todo: provide AktiveAbos if `clientStatusAnfrage.$.MitAbos` has value `true`
-					// > 5.1.8.3 ClientStatusAnfrage
-					// > Beispiel 3: Antwort des Clients: Dienst verfügbar, Client initialisiert gerade und will keine Auskunft zu den aktiven Abonnements geben:
-					// > 5.1.8.3 ClientStatusAnfrage
-					// > […]
-					// > Stellt der Server einen Unterschied zwischen seiner Abonnementliste und der Liste vom Client, kann der Server entweder stillschweigend den Unterschied beseitigen indem er die nicht aus der Clientsicht aktiven Abonnements löscht und die aus der Clientsicht aktiven Abonnements registriert und anfängt für diese Daten bereitzustellen oder er setzt den StartDienstZst in seiner StatusAntwort auf die aktuelle Zeit und erzwingt somit die Neuinitiali- sierung des Clients. Der zweite Weg wird empfohlen.
-					// > Ist die Struktur AktiveAbos leer, hat der Client keine aktiven Abonnements. Falls der Server doch welche kennt, sollen diese stillschweigend deaktiviert werden.
+					aktiveAbos,
 				],
 			})
 
