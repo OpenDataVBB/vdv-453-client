@@ -579,6 +579,7 @@ const createClient = async (cfg, opt = {}) => {
 			service,
 			aboId,
 		}
+		ok(expiresIn <= SETTIMEOUT_MAX_DELAY, 'expiresIn is too large')
 
 		const subscriptionAbortController = new AbortController()
 		subscriptionAbortControllers[service].set(aboId, subscriptionAbortController)
