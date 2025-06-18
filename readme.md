@@ -304,7 +304,7 @@ Works like `client.dfiCheckServerStatus()`, except for `REF-AUS`.
 `ausSubscribe(opt = {})` is an async function that takes the following arguments:
 
 1. `opt` (optional): An object whose fields override the following defaults:
-	- `expiresAt`: `Date.now() + AUS_DEFAULT_SUBSCRIPTION_TTL`,
+	- `expiresAt`: `Date.now() + AUS_DEFAULT_SUBSCRIPTION_TTL`
 	- `vorschauzeit`: `10` (in minutes)
 	- `hysterese`: `60` (in seconds)
 	- `fetchInterval`: `30_000` (in milliseconds)
