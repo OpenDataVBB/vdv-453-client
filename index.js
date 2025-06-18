@@ -77,6 +77,8 @@ const DATEN_ABRUFEN_ANTWORT_ROOT_SUB_TAGS_BY_SERVICE = new Map([
 	[DFI, 'AZBNachricht'],
 	// [REF_DFI, 'AZBNachricht'],
 	// Because a single AUSNachricht may have (unpredictably) much data (with the VBB API it usually is at most ~1mb, but we can't rely on that), we only parse its children (i.e. Linienfahrplan) into XML trees.
+	// todo: how to handle other AUSNachricht children: SollUmlauf, FahrtVerband, GesAnschluss?
+	// todo: parse AUSNachricht.AboID and expose it?
 	// todo:
 	// > Falls ein Datenlieferant eine DatenAbrufenAnfrage erhält, die Daten aber noch nicht bereit hat, soll eine leere DatenAbrufenAntwort (das verpflichtende Element Bestaetigung ist enthalten, das optionale Element AUSNachricht fehlt jedoch) gesendet werden. Der Datenkonsument darf in diesem Fall keine Rückschlüsse auf irgendwelche Linienfahrpläne ziehen, weil die Antwort darüber nichts aussagt.
 	[REF_AUS, 'Linienfahrplan'], // Linienfahrplan is a child of AUSNachricht
@@ -385,6 +387,7 @@ const createClient = async (cfg, opt = {}) => {
 			datenVersionID,
 		}
 
+		// todo: once we persist the latest known StartDienstZst/DatenVersionID, call onSubscriptionsResetByServer() even in these cases!
 		if (!await storage.has(STORAGE_PREFIX_LATEST_SERVER_STARTDIENSTZST + service)) {
 			logger.trace({
 				...logCtx,
@@ -491,6 +494,12 @@ const createClient = async (cfg, opt = {}) => {
 		const tags = parseResponse([
 			{tag: 'AboAntwort', preserve: true}, // todo: remove
 			{tag: BESTAETIGUNG, preserve: true},
+			// todo: support `BestaetigungMitAboID` for >1 subscriptions in one call? – see also "5.1.2.2.1 Vorgehen für mehrfache BestaetigungMitAboID einer AboAnfrage"
+			// > 5.1.2.2 Abonnementsbestätigung (AboAntwort)
+			// > […]
+			// > (Unterelement, alternativ, mehrfach) Enthält für jedes Abonement (AboID) separate Informationen zur Fehlerbehandlung.
+			// > […]
+			// > Seit den Standard-Versionen VDV453 v2.4 und VDV454 v2.0 kann eine AboAnfrage mit mehreren Abonnements durch einer AboAntwort mit mehrfachen dedizierten AboBestaetigungMitAboID sowie Fehlermeldungen für jedes Abonnement (AboID) beantwortet werden.
 		])
 		for await (const el of tags) {
 			const tag = el.$name
@@ -522,6 +531,7 @@ const createClient = async (cfg, opt = {}) => {
 
 	const _nrOfSubscriptions = async (service) => {
 		let _nr = 0
+		// todo: add `storage` method for more efficient calculation?
 		for await (const _ of _readSubscriptions(service)) {
 			_nr++
 		}
@@ -758,6 +768,7 @@ const createClient = async (cfg, opt = {}) => {
 							timePassed,
 						}, 'successfully fetched data manually')
 					} catch (err) {
+						// todo: error-log programmer errors!
 						logger.warn({
 							...logCtx,
 							err,
@@ -781,12 +792,14 @@ const createClient = async (cfg, opt = {}) => {
 			})
 		}
 
+		// todo: move this up, above the fetchPeriodicallyAndLogErrors() loop
 		logger.trace({
 			...logCtx,
 			bestaetigung,
 		}, 'successfully subscribed')
 		return {
 			aboId,
+			// todo: pass `subscriptionAbortController.signal` to allow client to witness expiration/cancelation?
 		}
 	}
 
@@ -874,7 +887,7 @@ const createClient = async (cfg, opt = {}) => {
 	// The server should notify the client of new/changed data, so that the latter can then request it.
 	// > 5.1.3.1 Datenbereitstellung signalisieren (DatenBereitAnfrage)
 	// > Ist das Abonnement eingerichtet und sind die Daten bereitgestellt, wird der Datenkonsument durch eine DatenBereitAnfrage über das Vorhandensein aktualisierter Daten informiert. Dies geschieht bei jeder Änderung der Daten die dem Abonnement zugeordnet sind. Die Signalisierung bezieht sich auf alle Abonnements eines Dienstes.
-	// The VDV API is constantly notifying us via `DatenBereitAnfrage`s when any IstFahrt(s) has changed, even while we're currently fetching. Because of the latency between us and the API, it's essentially a distributed system of two parties that try to sync their state: We do't know if the newly changed IstFahrt is already included in the data currently being fetched.
+	// The VDV API is constantly notifying us via `DatenBereitAnfrage`s when any IstFahrt(s) has changed, even while we're currently fetching. Because of the latency between us and the API, it's essentially a distributed system of two parties that try to sync their state: We do't know if the newly changed IstFahrt is already included in the batch currently being fetched.
 	// This is why we just fetch again afterwards whenever we have received a DatenBereitAnfrage while fetching.
 	const _fetchNewDataUntilNoMoreAvailable = async (service, fetchNewDataOnce, maxIterations) => {
 		ok(maxIterations === Infinity || Number.isInteger(maxIterations))
@@ -950,7 +963,7 @@ const createClient = async (cfg, opt = {}) => {
 
 			datenBereitAnfrageReceivedWhileFetching[service] = true
 
-			const maxIterations = Infinity
+			const maxIterations = Infinity // todo: why?
 			fetchNewDataUntilNoMoreAvailable(maxIterations)
 			.catch((err) => {
 				// Because it catches fetch errors by itself, if it does reject, we likely have a bug.
@@ -1143,7 +1156,10 @@ const createClient = async (cfg, opt = {}) => {
 	// > Eine AboID ist innerhalb eines jeden Dienstes eindeutig.
 	const getNextAboId = () => String(10000 + Math.round(Math.random() * 9999))
 	// todo: "Wird eine AboAnfrage mit einer AboID gestellt und es existiert bereits ein Abonnement unter dieser Bezeichnung, so wird das bestehende Abonnement überschrieben." – warn about this? does it apply across services?
+
 	// todo: persist AboIDs across client restarts, reinstate fetch timers after restarts? – transactions (or locking as a fallback) will be necessary to guarantee consistent client behaviour (start transaction, set up subscription, upon success persist AboId, commit transaction)
+	// todo: switch to this? service -> AboID -> {aboSubChildren, expiresAt, subscriptionAbortController}
+
 	// service -> AboID -> subscriptionAbortController
 	const subscriptionAbortControllers = Object.fromEntries(
 		SERVICES.map(svc => [svc, new Map()]),
@@ -1171,6 +1187,11 @@ const createClient = async (cfg, opt = {}) => {
 			.map(([svc, map]) => [svc, map.keys()]),
 		),
 	}, 'initial state')
+
+	// > 5.1.8.2 Antwort (StatusAntwort, Status)
+	// > […]
+	// > Solange der Client keine StatusAntwort mit dem Status = „ok“ erhält, sollte dieser keine anderen Anfragen (z.B. AboAnfragen, DatenBereitAnfragen, DatenAbrufenAnfragen) an den Server schicken, um diesen im Fall eines Systemproblems nicht zusätzlich zu belasten und mit Anfragen zu überfluten
+	// todo: implement this ^
 
 	// todo: make configurable with a decent UX
 	const datensatzAlle = false
@@ -1200,8 +1221,11 @@ const createClient = async (cfg, opt = {}) => {
 			expiresAt: Date.now() + DFI_DEFAULT_SUBSCRIPTION_TTL,
 			linienId: null,
 			richtungsId: null,
+			// todo: what does this do exactly? does it provide more data? – make it customizable
+			// BVG's HACON system subscribes to AUS with `120`
 			vorschauzeit: 10, // minutes
-			// todo: is `0` possible? does it provide more data?
+			// todo: is `0` possible? does it provide more data? – make it customizable
+			// BVG's HACON system subscribes to AUS with `60`
 			hysterese: 1, // seconds
 			// todo [breaking]: rename to `manualFetchInterval`
 			fetchInterval: 30_000, // 30s
@@ -1339,6 +1363,9 @@ const createClient = async (cfg, opt = {}) => {
 			abortController,
 		} = cfg
 
+		// todo: does this exist for REF_AUS? does this make sense? would it make sense for *all* services?
+		const datensatzAlle = true
+
 		const hookCtx = {
 			datensatzAlle,
 			// todo: expose if this was a manual fetch or due to DatenBereitAnfrage!
@@ -1352,7 +1379,9 @@ const createClient = async (cfg, opt = {}) => {
 				abortController,
 			})
 			for await (const [linienfahrplan, ctx] of els) {
+				// todo: `raw:ausref:Linienfahrplan` -> `raw:refaus:Linienfahrplan`
 				data.emit(`raw:${REF_AUS}:Linienfahrplan`, linienfahrplan)
+				// todo: trace-log linienfahrplan?
 
 				for (const child of linienfahrplan.$children) {
 					// todo: handle other `Linienfahrplan` children
@@ -1360,6 +1389,7 @@ const createClient = async (cfg, opt = {}) => {
 						data.emit(`raw:${REF_AUS}:SollFahrt`, child, linienfahrplan)
 
 						const sollFahrt = parseRefAusSollFahrt(child, linienfahrplan, ctx)
+						// todo: trace-log sollFahrt?
 						nrOfSollFahrts++
 						data.emit(`${REF_AUS}:SollFahrt`, sollFahrt)
 					} else if (!PARSED_LINIENFAHRPLAN_CHILDREN.has(child.$name)) {
