@@ -465,7 +465,6 @@ const createClient = async (cfg, opt = {}) => {
 		await _checkStartDienstZstAndDatenVersionID(service, startDienstZst, datenVersionID)
 	}
 	const _checkClientStatusAnfrage = async (service, clientStatusAfrage) => {
-		console.error('clientStatusAfrage', clientStatusAfrage)
 		const startDienstZst = clientStatusAfrage.StartDienstZst?.$text || null
 		ok(startDienstZst !== null, 'missing ClientStatusAnfrage.StartDienstZst')
 		const datenVersionID = clientStatusAfrage.DatenVersionID?.$text || null
