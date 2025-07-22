@@ -1,7 +1,7 @@
 {
 	"name": "vdv-453-client",
 	"description": "Subscribe to realtime public transport data from a VDV-453/VDV-454 API.",
-	"version": "3.0.0",
+	"version": "3.0.0-alpha.4",
 	"type": "module",
 	"main": "index.js",
 	"files": [
