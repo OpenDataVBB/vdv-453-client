@@ -1167,7 +1167,7 @@ const createClient = async (cfg, opt = {}) => {
 
 	{
 		for await (const {service, aboId, expiresAt} of _readSubscriptions(null, true)) {
-			logger.trace({
+			logger.debug({
 				service,
 				aboId,
 				expiresAt,
@@ -1179,7 +1179,7 @@ const createClient = async (cfg, opt = {}) => {
 		}
 	}
 
-	logger.trace({
+	logger.info({
 		startDienstZst,
 		// pino doesn't seem to support `Map`s, so we convert them
 		aboIdsByService: Object.fromEntries(
