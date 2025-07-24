@@ -1425,7 +1425,7 @@ const createClient = async (cfg, opt = {}) => {
 	const _fetchNewRefAusDataUntilNoMoreAvailable = async (maxIterations) => {
 		await _fetchNewDataUntilNoMoreAvailable(REF_AUS, _fetchNewRefAusDataOnce, maxIterations)
 	}
-	_handleDatenBereitAnfrage(AUS, _fetchNewRefAusDataUntilNoMoreAvailable)
+	_handleDatenBereitAnfrage(REF_AUS, _fetchNewRefAusDataUntilNoMoreAvailable)
 
 	const refAusCheckServerStatus = async () => {
 		return await _sendStatusAnfrage(REF_AUS)
