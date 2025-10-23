@@ -146,6 +146,7 @@ const createClient = async (cfg, opt = {}) => {
 		logger,
 		requestsLogger,
 		fetchSubscriptionsDataPeriodically,
+		fetchNewDataCooldownAfterFailure,
 		openStorage,
 		onDatenBereitAnfrage,
 		onClientStatusAnfrage,
@@ -186,6 +187,8 @@ const createClient = async (cfg, opt = {}) => {
 		// Some VDV-453 systems may not notify us about new/changed data (see _handleDatenBereitAnfrage), so we fetch the data "manually" periodically.
 		// todo [breaking]: default to false
 		fetchSubscriptionsDataPeriodically: true,
+		// While fetching new data iteratively (and continuously, depending on the usage), the number of milliseconds that the client should wait after a failure.
+		fetchNewDataCooldownAfterFailure: 500, // 0.5s
 		openStorage: openInMemoryStorage,
 		// hooks for debugging/metrics/etc.
 		onDatenBereitAnfrage: (svc, datenBereitAnfrage) => {},
@@ -919,13 +922,17 @@ const createClient = async (cfg, opt = {}) => {
 						abortController: new AbortController(),
 					})
 				} catch (err) {
-					// todo: throw ES errors: ReferenceError, TypeError, etc.
+					// todo: throw ES errors: ReferenceError, TypeError, etc. – or only catch VDV errors?
 					logger.warn({
 						...logCtx,
 						iteration: iterations - 1,
 						err,
 					}, `failed to fetch new ${service} data: ${err.message}`)
-					// todo: `datenBereitAnfrageReceivedWhileFetching[service] = true` to cause a refetch? – prevent endless cycles! exponential backoff?
+					// todo: `datenBereitAnfrageReceivedWhileFetching[service] = true` to cause a refetch? – prevent endless cycles!
+
+					// prevent DOS-ing the server
+					// todo: use exponential backoff?
+					await new Promise(resolve => setTimeout(resolve, fetchNewDataCooldownAfterFailure))
 				}
 				// todo: wait for a moment before refetching?
 			}
