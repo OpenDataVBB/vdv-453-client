@@ -275,6 +275,7 @@ Sends a VDV-453 `StatusAnfrage` to the server, to obtain information about the s
 1. `opt` (optional): An object whose fields override the following defaults:
 	- `expiresAt`: `Date.now() + REF_AUS_DEFAULT_SUBSCRIPTION_TTL`
 	- `validFrom`: `Date.now()` – Start of the time frame to get plan data for. The plan data will include those `SollFahrt`s whose first departure is within the time frame.
+	- `mitBereitsAktivenFahrten`: `true` – Include those `SollFahrt`s that are already running at `validFrom`, i.e. their first departure is *before* `validFrom` but any later arrival/departure is *after*.
 	- `validUntil`: `validFrom + REF_AUS_DEFAULT_SUBSCRIPTION_TTL` – End of the time frame to get plan data for.
 	- `fetchInterval`: `300_000` (in milliseconds)
 

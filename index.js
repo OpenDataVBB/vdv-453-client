@@ -1305,12 +1305,12 @@ const createClient = async (cfg, opt = {}) => {
 		const {
 			expiresAt,
 			validFrom,
-
+			mitBereitsAktivenFahrten,
 			fetchInterval,
 		} = {
 			expiresAt: now + REF_AUS_DEFAULT_SUBSCRIPTION_TTL,
 			validFrom: now, // todo: default beginning of the day?
-
+			mitBereitsAktivenFahrten: true,
 			// todo [breaking]: rename to `manualFetchInterval`
 			fetchInterval: 300_000, // 5m
 			...opt,
@@ -1340,7 +1340,9 @@ const createClient = async (cfg, opt = {}) => {
 			// todo: HaltFilter
 			// todo: UmlaufFilter
 			// todo: MitGesAnschluss
-			// todo: MitBereitsAktivenFahrten
+			...(mitBereitsAktivenFahrten ? [
+				x('MitBereitsAktivenFahrten', {}, 'true'),
+			] : []),
 			// todo: MitFormation
 		]
 		return await _subscribe(
