@@ -254,7 +254,11 @@ const createClient = async (cfg, opt = {}) => {
 			service,
 			call,
 		].map(part => encodeURIComponent(part)).join('/')
-		// todo: debug-log
+
+		logger.trace({
+			service,
+			path,
+		}, 'adding HTTP POST request handler')
 		router.post(path, async (req, res, next) => {
 			try {
 				await handleRequest(req, res, next)
