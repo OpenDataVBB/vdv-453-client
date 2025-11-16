@@ -25,7 +25,7 @@
 	"bugs": "https://github.com/OpenDataVBB/vdv-453-client/issues",
 	"license": "ISC",
 	"engines": {
-		"node": ">=20"
+		"node": ">=22"
 	},
 	"dependencies": {
 		"content-type": "^1.0.4",
