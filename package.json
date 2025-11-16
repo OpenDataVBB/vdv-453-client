@@ -31,7 +31,7 @@
 		"content-type": "^1.0.4",
 		"debug": "^4.3.4",
 		"on-headers": "^1.0.2",
-		"pino": "^8.11.0",
+		"pino": "^10.1.0",
 		"router": "^2.2.0",
 		"saxes": "^6.0.0",
 		"unist-builder": "^4.0.0",
@@ -43,7 +43,7 @@
 		"eslint": "^9.39.1",
 		"get-port": "^7.0.0",
 		"globals": "^16.5.0",
-		"pino-pretty": "^10.0.0",
+		"pino-pretty": "^13.1.2",
 		"tap-min": "^3.0.0",
 		"tape": "^5.0.1"
 	},
