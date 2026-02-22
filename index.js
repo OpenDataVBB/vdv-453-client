@@ -1398,9 +1398,6 @@ const createClient = async (cfg, opt = {}) => {
 			abortController,
 		} = cfg
 
-		// todo: does this exist for REF_AUS? does this make sense? would it make sense for *all* services?
-		const datensatzAlle = true
-
 		const hookCtx = {
 			datensatzAlle,
 			// todo: expose if this was a manual fetch or due to DatenBereitAnfrage!
