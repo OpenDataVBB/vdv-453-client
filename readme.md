@@ -494,6 +494,7 @@ into the following JSON tree.
 `createClient()`'s `opt` object allows you to define the following hooks. A hook can be a sync or an [async](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function) function.
 
 > ![IMPORTANT]
+>
 > Your hook functions must never throw/reject, otherwise the client may be subtly broken!
 
 - `onDatenBereitAnfrage`: a function with the signature `async (service, datenBereitAnfrage) => {}`
