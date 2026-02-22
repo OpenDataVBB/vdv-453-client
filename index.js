@@ -126,6 +126,22 @@ const waitFor = async (ms, abortSignal) => {
 	})
 }
 
+// adapted from https://github.com/sindresorhus/p-retry/blob/0b1e29877422c40b59cad4a4c938dcf44fe512ce/index.js#L52-L60
+const createGetExpDelay = (factor, minTimeout, maxTimeout) => {
+	let retries = 0
+	const getExpDelay = () => {
+		const attempt = Math.max(1, retries++ + 1)
+		const random = 1 + Math.random() / 5
+		console.error({random})
+
+		return Math.min(
+			Math.round(random * minTimeout * (factor ** (attempt - 1))),
+			maxTimeout,
+		)
+	}
+	return getExpDelay
+}
+
 // This implementation follows the VDV 453 spec, as documented in the "VDV-453 Ist-Daten-Schnittstelle – Version 2.4" document. It also supports the VDV 454 extension, as documented in the "VDV-454 Ist-Daten-Schnittstelle – Fahrplanauskunft – Version 2.0".
 // https://web.archive.org/web/20240221234602/https://www.vdv.de/453v24-sds.pdfx?forced=false
 // https://web.archive.org/web/20240222010651/https://www.vdv.de/454v2.0-sd.pdfx?forced=false
@@ -188,7 +204,7 @@ const createClient = async (cfg, opt = {}) => {
 		// todo [breaking]: default to false
 		fetchSubscriptionsDataPeriodically: true,
 		// While fetching new data iteratively (and continuously, depending on the usage), the number of milliseconds that the client should wait after a failure.
-		fetchNewDataCooldownAfterFailure: 500, // 0.5s
+		fetchNewDataCooldownAfterFailure: 1000, // 1s
 		openStorage: openInMemoryStorage,
 		// hooks for debugging/metrics/etc.
 		onDatenBereitAnfrage: (svc, datenBereitAnfrage) => {},
@@ -916,6 +932,7 @@ const createClient = async (cfg, opt = {}) => {
 
 		isFetchingData[service] = true
 		let iterations = 0
+		const retryDelay = createGetExpDelay(2, fetchNewDataCooldownAfterFailure, fetchNewDataCooldownAfterFailure * 5)
 		try {
 			while (++iterations <= maxIterations || datenBereitAnfrageReceivedWhileFetching[service]) {
 				datenBereitAnfrageReceivedWhileFetching[service] = false
@@ -935,8 +952,7 @@ const createClient = async (cfg, opt = {}) => {
 					// todo: `datenBereitAnfrageReceivedWhileFetching[service] = true` to cause a refetch? – prevent endless cycles!
 
 					// prevent DOS-ing the server
-					// todo: use exponential backoff?
-					await new Promise(resolve => setTimeout(resolve, fetchNewDataCooldownAfterFailure))
+					await new Promise(resolve => setTimeout(resolve, retryDelay()))
 				}
 				// todo: wait for a moment before refetching?
 			}
