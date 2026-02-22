@@ -410,7 +410,7 @@ const createClient = async (cfg, opt = {}) => {
 			datenVersionID,
 		}
 
-		// todo: once we persist the latest known StartDienstZst/DatenVersionID, call onSubscriptionsResetByServer() even in these cases!
+		// todo [breaking]: call onSubscriptionsResetByServer() even in this case, with `prevTStartDienstZst: null`!
 		if (!await storage.has(STORAGE_PREFIX_LATEST_SERVER_STARTDIENSTZST + service)) {
 			logger.trace({
 				...logCtx,
@@ -423,6 +423,7 @@ const createClient = async (cfg, opt = {}) => {
 			)
 			return;
 		}
+		// todo [breaking]: call onSubscriptionsResetByServer() even in this case, with `prevDatenVersionID: null`!
 		if (!await storage.has(STORAGE_PREFIX_LATEST_SERVER_DATENVERSIONID + service)) {
 			logger.trace({
 				...logCtx,
@@ -514,7 +515,7 @@ const createClient = async (cfg, opt = {}) => {
 		let result = null
 
 		const tags = parseResponse([
-			{tag: 'AboAntwort', preserve: true}, // todo: remove
+			{tag: 'AboAntwort', preserve: true},
 			{tag: BESTAETIGUNG, preserve: true},
 			// todo: support `BestaetigungMitAboID` for >1 subscriptions in one call? – see also "5.1.2.2.1 Vorgehen für mehrfache BestaetigungMitAboID einer AboAnfrage"
 			// > 5.1.2.2 Abonnementsbestätigung (AboAntwort)
@@ -668,15 +669,15 @@ const createClient = async (cfg, opt = {}) => {
 			}
 
 			const expirationTimer = setTimeout(expireSubClientSide, expiresIn)
-			expirationTimer.unref() // todo: is this correct?
+			expirationTimer.unref()
 			_expirationTimersBySubAbortController.set(subscriptionAbortController, expirationTimer)
 
 			// clear expiration timer on external subscription abort
 			// If the subscription got aborted externally (i.e. not because it has expired but for some other reason), we should clear the timeout.
-			// todo: Also, we clear the subscription abort listener as soon as the expiration timer fires.
+			// Also, we clear the subscription abort listener as soon as the expiration timer fires.
 			{
 				const cancelExpirationTimer = () => {
-					logger.trace(logCtx, `subscription aborted client-side: "${subscriptionAbortController.signal.reason}"`)
+					logger.trace(logCtx, `subscription aborted: "${subscriptionAbortController.signal.reason}"`)
 
 					// de-listen self, a.k.a. once()
 					subscriptionAbortController.signal.removeEventListener('abort', cancelExpirationTimer)
