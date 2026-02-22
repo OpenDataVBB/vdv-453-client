@@ -237,12 +237,12 @@ const createClient = async (cfg, opt = {}) => {
 		logger,
 	}
 
-	// When fetching all new data from the server, the maximum number of fetch iterations. The number of items per iterations depends on the server.
-	const datenAbrufenMaxIterations = {
+	// When fetching all new data from the server, the maximum number of batches to fetch. The number of items per batch depends on the server and service.
+	const datenAbrufenMaxBatches = {
 		default: 10,
 		[AUS]: 300,
 		[REF_AUS]: 1000,
-		...(opt.datenAbrufenMaxIterations ?? {}),
+		...(opt.datenAbrufenMaxBatches ?? {}),
 	}
 
 	const {
@@ -1029,47 +1029,49 @@ const createClient = async (cfg, opt = {}) => {
 	const _fetchDataOnce = async function* (service, opt) {
 		await onDataFetchStarted(service, opt)
 
-		const maxIterations = datenAbrufenMaxIterations[service] ?? datenAbrufenMaxIterations.default
-		ok(Number.isInteger(maxIterations), `opt.datenAbrufenMaxIterations[${service}] or opt.datenAbrufenMaxIterations.default must be an integer`)
+		const maxBatches = datenAbrufenMaxBatches[service] ?? datenAbrufenMaxBatches.default
+		ok(Number.isInteger(maxBatches), `opt.datenAbrufenMaxBatches[${service}] or opt.datenAbrufenMaxBatches.default must be an integer`)
 
 		let timePassed = null
-		let itLevel = 0
+		let nrOfBatches = 0
 		try {
 			const t0 = performance.now()
 			const itControl = {
-				maxIterations,
+				maxBatches,
 				continue: false,
 			}
 			while (true) {
-				if (itLevel >= itControl.maxIterations) {
+				if (nrOfBatches >= itControl.maxBatches) {
 					// todo: throw more specific error?
-					// todo [breaking]: "recursions" -> "iterations"
+					// todo [breaking]: "recursions" -> "batches"
 					const err = new Error(`${service}: too many recursions while fetching data`)
 					err.service = service
 					err.datensatzAlle = opt.datensatzAlle
-					// todo [breaking]: rename to `iterations`
-					err.recursions = itLevel
+					// todo [breaking]: rename to `nrOfBatches`
+					err.recursions = nrOfBatches
 					throw err
 				}
 
 				itControl.continue = false
-				yield* _sendDatenAbrufenAnfrage(service, opt, itLevel++, itControl)
+				yield* _sendDatenAbrufenAnfrage(service, opt, nrOfBatches++, itControl)
 				if (itControl.continue !== true) break
 			}
 			timePassed = performance.now() - t0
 		} catch (err) {
 			await onDataFetchFailed(service, opt, err, {
-				nrOfFetches: itLevel,
+				// todo [breaking]: rename to nrOfBatches
+				nrOfFetches: nrOfBatches,
 				timePassed,
 			})
 			throw err
 		}
 		await onDataFetchSucceeded(service, opt, {
-			nrOfFetches: itLevel,
+			// todo [breaking]: rename to nrOfBatches
+			nrOfFetches: nrOfBatches,
 			timePassed,
 		})
 	}
-	const _sendDatenAbrufenAnfrage = async function* (service, opt, itLevel, itControl) {
+	const _sendDatenAbrufenAnfrage = async function* (service, opt, batch, itControl) {
 		opt = {
 			datensatzAlle: false,
 			abortController: new AbortController(),
@@ -1092,7 +1094,7 @@ const createClient = async (cfg, opt = {}) => {
 			datensatzAlle,
 			bestaetigung: null, // still unknown
 			weitereDaten: null, // still unknown
-			itLevel,
+			batch,
 			dataItems: 0,
 		}
 		logger.trace(logCtx, 'requesting data')
@@ -1174,7 +1176,7 @@ const createClient = async (cfg, opt = {}) => {
 			logger.debug({
 				...logCtx,
 				bestaetigung: undefined,
-			}, `received DatenAbrufenAntwort with WeitereDaten=true, iterating further (${itLevel + 1})`)
+			}, `received DatenAbrufenAntwort with WeitereDaten=true, fetching another batch (${batch + 1})`)
 			itControl.continue = true
 		} else {
 			logger.trace({
