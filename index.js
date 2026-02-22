@@ -926,12 +926,12 @@ const createClient = async (cfg, opt = {}) => {
 		}
 
 		if ((await _nrOfSubscriptions(service)) === 0) { // 0 subscriptions on `service`
-			logger.trace(logCtx, `not starting to fetch new ${service} data again, because there are no subscriptions (anymore)`)
+			logger.debug(logCtx, `not starting to fetch new ${service} data again, because there are no subscriptions (anymore)`)
 			return;
 		}
 		// Make sure there's only ever one of this function running.
 		if (isFetchingData[service]) {
-			logger.trace(logCtx, `not starting to fetch new ${service} data again, because we're already fetching`)
+			logger.debug(logCtx, `not starting to fetch new ${service} data again, because we're already fetching`)
 			return;
 		}
 		logger.debug(logCtx, `starting to fetch new ${service} data until no new data is available anymore`)
@@ -964,6 +964,10 @@ const createClient = async (cfg, opt = {}) => {
 			}
 		} finally {
 			isFetchingData[service] = false
+			logger.trace({
+				...logCtx,
+				iterations,
+			}, `done fetching new ${service} data`)
 		}
 	}
 
@@ -1087,6 +1091,7 @@ const createClient = async (cfg, opt = {}) => {
 			bestaetigung: null, // still unknown
 			weitereDaten: null, // still unknown
 			itLevel,
+			dataItems: 0,
 		}
 		logger.trace(logCtx, 'requesting data')
 
@@ -1148,6 +1153,8 @@ const createClient = async (cfg, opt = {}) => {
 				weitereDaten = logCtx.weitereDaten = true
 			}
 			if (tag === dataSubTag) {
+				logCtx.dataItems++
+
 				// We cannot guarantee the order of elements in the loop over `tags`, so `WEITERE_DATEN` might come *before* `BESTAETIGUNG`. Because we want both, and because we assume that actual data elements come up after the two, we call the hook here.
 				if (!onDatenAbrufenAntwortCalled) {
 					onDatenAbrufenAntwortCalled = true
@@ -1166,6 +1173,11 @@ const createClient = async (cfg, opt = {}) => {
 				bestaetigung: undefined,
 			}, `received DatenAbrufenAntwort with WeitereDaten=true, iterating further (${itLevel + 1})`)
 			itControl.continue = true
+		} else {
+			logger.trace({
+				...logCtx,
+				bestaetigung: undefined,
+			}, `received DatenAbrufenAntwort without WeitereDaten=true`)
 		}
 	}
 
