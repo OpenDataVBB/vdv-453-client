@@ -161,7 +161,7 @@ data.on('aus:IstFahrt', (istFahrt) => {
 ```
 
 > [!WARNING]
-> Currently, `vdv-453-client` has some shortcomings in the handling of subscriptions; For example, it does not persist the information about its subscriptions, and it does not respond to the server with its active subscriptions (`AktiveAbos`) when asked. Refer to the [tracking Issue #3](https://github.com/OpenDataVBB/vdv-453-client/issues/3) for more details.
+> Currently, `vdv-453-client` has some shortcomings in the handling of subscriptions; For example, it does not respond to the server with its active subscriptions (`AktiveAbos`) when asked. Refer to the [tracking Issue #3](https://github.com/OpenDataVBB/vdv-453-client/issues/3) for more details.
 
 
 ## API
@@ -176,6 +176,7 @@ A client instance can be created by calling the async function `createClient()`.
 	- `leitstelle`: the client's *Leitstellenkennung* (see the "Getting Started" section)
 	- `theirLeitstelle`: the server's *Leitstellenkennung*
 2. `opt`: an optional object whose fields override these defaults:
+	- `openStorage`: an async function that returns a [storage interface](#storage-interface).
 	- `logger`: used for general log messages; must be [pino](https://getpino.io/)-compatible
 	- `requestsLogger`: used for logging HTTP requests/responses; must be [pino](https://getpino.io/)-compatible
 	- `fetchSubscriptionsDataPeriodically`: if subscriptions' data should be fetched *manually* periodically, regardless of wether the server proactively reports new data using `DatenBereitAnfrage`s – default: `true`
@@ -333,6 +334,21 @@ Works like `client.dfiCheckServerStatus()`, except for `AUS`.
 ### `client.unsubscribeAllOwned()`
 
 An async function that will unsubscribe from all (unexpired) subscriptions created using `client`.
+
+### storage interface
+
+`vdv-453-client` persists state about its subscriptions in a key-value store. Unless you pass in a custom implementiation, it will use an in-memory store, i.e. forget about all subscriptions when the process exits.
+
+You must pass in a function that returns an object with the following fields:
+- `has(key)` – Async function that returns if the specified key is stored.
+- `get(key)` – Async function that returns the value stored for `key`.
+- `set(key, val, expiresInMs = Infinity)` – Async function that stores `val` (string) for `key`.
+- `del(key)` – Async function that deletes the entry for `key` if present.
+- `keys(prefix = null)` – Async function that returns an array of all keys that begin with `prefix`.
+- `entries(prefix = null)` – Async function that returns an array of all entries (`[key, val]`) whose key begins with `prefix`.
+
+> [!TIP]
+> [`vdv-453-nats-adapter` has a Redis implementation](https://github.com/OpenDataVBB/vdv-453-nats-adapter/blob/803446797d0c22d533c4815c4cc77973ee63a7b4/lib/redis-store.js).
 
 ### error handling
 
