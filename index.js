@@ -1040,6 +1040,17 @@ const createClient = async (cfg, opt = {}) => {
 				continue: false,
 			}
 			while (true) {
+				if (itLevel >= itControl.maxIterations) {
+					// todo: throw more specific error?
+					// todo [breaking]: "recursions" -> "iterations"
+					const err = new Error(`${service}: too many recursions while fetching data`)
+					err.service = service
+					err.datensatzAlle = opt.datensatzAlle
+					// todo [breaking]: rename to `iterations`
+					err.recursions = itLevel
+					throw err
+				}
+
 				itControl.continue = false
 				yield* _sendDatenAbrufenAnfrage(service, opt, itLevel++, itControl)
 				if (itControl.continue !== true) break
@@ -1067,16 +1078,6 @@ const createClient = async (cfg, opt = {}) => {
 			datensatzAlle,
 			abortController,
 		} = opt
-		if (itLevel >= itControl.maxIterations) {
-			// todo: throw more specific error?
-			// todo [breaking]: "recursions" -> "iterations"
-			const err = new Error(`${service}: too many recursions while fetching data`)
-			err.service = service
-			err.datensatzAlle = datensatzAlle
-			// todo [breaking]: rename to `iterations`
-			err.recursions = itLevel
-			throw err
-		}
 
 		ok(
 			DATEN_ABRUFEN_ANTWORT_ROOT_SUB_TAGS_BY_SERVICE.has(service),
