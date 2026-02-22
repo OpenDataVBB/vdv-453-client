@@ -661,6 +661,12 @@ const createClient = async (cfg, opt = {}) => {
 				})
 			}
 
+			// clear old expiration timer if applicable, set up a new one
+			if (_expirationTimersBySubAbortController.has(subscriptionAbortController)) {
+				const oldExpirationTimer = _expirationTimersBySubAbortController.get(subscriptionAbortController)
+				clearTimeout(oldExpirationTimer)
+			}
+
 			const expirationTimer = setTimeout(expireSubClientSide, expiresIn)
 			expirationTimer.unref() // todo: is this correct?
 			_expirationTimersBySubAbortController.set(subscriptionAbortController, expirationTimer)
