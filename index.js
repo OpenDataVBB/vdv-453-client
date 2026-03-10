@@ -132,7 +132,6 @@ const createGetExpDelay = (factor, minTimeout, maxTimeout) => {
 	const getExpDelay = () => {
 		const attempt = Math.max(1, retries++ + 1)
 		const random = 1 + Math.random() / 5
-		console.error({random})
 
 		return Math.min(
 			Math.round(random * minTimeout * (factor ** (attempt - 1))),
