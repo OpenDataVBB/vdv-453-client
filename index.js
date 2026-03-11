@@ -783,10 +783,8 @@ const createClient = async (cfg, opt = {}) => {
 
 					try {
 						const t0 = performance.now()
-						// Note: The server might also notify us of new data, to which we react with fetching new data (see _handleDatenBereitAnfrage()), so just doing it "manually" here nonetheless would result in fetching the twice in parallel. Therefore we use _fetch*NewDataUntilNoMoreAvailable() with maxIterations=1 instead of _fetchNew*DataOnce(), because the former will only ever run once in parallel.
-						// todo [breaking]: Infinity maxIterations (and remove parameter) – this breaks the assumption how often a manual fetch will be done: "every fetchInterval + timePassed(fetchOnce)" -> "whenever fetchInterval has passed without DatenBereitAbfrage"
-						const maxIterations = 1
-						await fetchNewDataUntilNoMoreAvailable(maxIterations)
+						// Note: The server might also notify us of new data, to which we react with fetching new data (see _handleDatenBereitAnfrage()), so just doing it "manually" here nonetheless would result in fetching the twice in parallel. Therefore we use _fetch*NewDataUntilNoMoreAvailable() instead of _fetchNew*DataOnce(), because the former ensures it only ever runs once in parallel.
+						await fetchNewDataUntilNoMoreAvailable()
 						const timePassed = performance.now() - t0
 
 						await onSubscriptionManualFetchSucceeded(service, logCtx, {
@@ -918,11 +916,9 @@ const createClient = async (cfg, opt = {}) => {
 	// > Ist das Abonnement eingerichtet und sind die Daten bereitgestellt, wird der Datenkonsument durch eine DatenBereitAnfrage über das Vorhandensein aktualisierter Daten informiert. Dies geschieht bei jeder Änderung der Daten die dem Abonnement zugeordnet sind. Die Signalisierung bezieht sich auf alle Abonnements eines Dienstes.
 	// The VDV API is constantly notifying us via `DatenBereitAnfrage`s when any IstFahrt(s) has changed, even while we're currently fetching. Because of the latency between us and the API, it's essentially a distributed system of two parties that try to sync their state: We do't know if the newly changed IstFahrt is already included in the batch currently being fetched.
 	// This is why we just fetch again afterwards whenever we have received a DatenBereitAnfrage while fetching.
-	const _fetchNewDataUntilNoMoreAvailable = async (service, fetchNewDataOnce, maxIterations) => {
-		ok(maxIterations === Infinity || Number.isInteger(maxIterations))
+	const _fetchNewDataUntilNoMoreAvailable = async (service, fetchNewDataOnce) => {
 		const logCtx = {
 			service,
-			maxIterations: String(maxIterations), // pino cannot serialize Infinity :/
 		}
 
 		if ((await _nrOfSubscriptions(service)) === 0) { // 0 subscriptions on `service`
@@ -940,7 +936,8 @@ const createClient = async (cfg, opt = {}) => {
 		let iterations = 0
 		const retryDelay = createGetExpDelay(2, fetchNewDataCooldownAfterFailure, fetchNewDataCooldownAfterFailure * 5)
 		try {
-			while (++iterations <= maxIterations || datenBereitAnfrageReceivedWhileFetching[service]) {
+			while (datenBereitAnfrageReceivedWhileFetching[service]) {
+				iterations++
 				datenBereitAnfrageReceivedWhileFetching[service] = false
 				// We must keep looping even with fetch failures, so we catch & log all errors.
 				try {
@@ -1000,8 +997,7 @@ const createClient = async (cfg, opt = {}) => {
 
 			datenBereitAnfrageReceivedWhileFetching[service] = true
 
-			const maxIterations = 1
-			fetchNewDataUntilNoMoreAvailable(maxIterations)
+			fetchNewDataUntilNoMoreAvailable()
 			.catch((err) => {
 				// Because it catches fetch errors by itself, if it does reject, we likely have a bug.
 				logger.error({
@@ -1338,8 +1334,8 @@ const createClient = async (cfg, opt = {}) => {
 	}
 
 	// fetch triggered by the data provider, or by the subscription's manual fetch interval
-	const _fetchNewDfiDataUntilNoMoreAvailable = async (maxIterations) => {
-		await _fetchNewDataUntilNoMoreAvailable(DFI, _fetchNewDfiDataOnce, maxIterations)
+	const _fetchNewDfiDataUntilNoMoreAvailable = async () => {
+		await _fetchNewDataUntilNoMoreAvailable(DFI, _fetchNewDfiDataOnce)
 	}
 	_handleDatenBereitAnfrage(DFI, _fetchNewDfiDataUntilNoMoreAvailable)
 
@@ -1470,8 +1466,8 @@ const createClient = async (cfg, opt = {}) => {
 	}
 
 	// fetch triggered by the data provider, or by the subscription's manual fetch interval
-	const _fetchNewRefAusDataUntilNoMoreAvailable = async (maxIterations) => {
-		await _fetchNewDataUntilNoMoreAvailable(REF_AUS, _fetchNewRefAusDataOnce, maxIterations)
+	const _fetchNewRefAusDataUntilNoMoreAvailable = async () => {
+		await _fetchNewDataUntilNoMoreAvailable(REF_AUS, _fetchNewRefAusDataOnce)
 	}
 	_handleDatenBereitAnfrage(REF_AUS, _fetchNewRefAusDataUntilNoMoreAvailable)
 
@@ -1603,8 +1599,8 @@ const createClient = async (cfg, opt = {}) => {
 	}
 
 	// fetch triggered by the data provider, or by the subscription's manual fetch interval
-	const _fetchNewAusDataUntilNoMoreAvailable = async (maxIterations) => {
-		await _fetchNewDataUntilNoMoreAvailable(AUS, _fetchNewAusDataOnce, maxIterations)
+	const _fetchNewAusDataUntilNoMoreAvailable = async () => {
+		await _fetchNewDataUntilNoMoreAvailable(AUS, _fetchNewAusDataOnce)
 	}
 	_handleDatenBereitAnfrage(AUS, _fetchNewAusDataUntilNoMoreAvailable)
 
