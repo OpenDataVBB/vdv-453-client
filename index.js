@@ -1000,7 +1000,7 @@ const createClient = async (cfg, opt = {}) => {
 
 			datenBereitAnfrageReceivedWhileFetching[service] = true
 
-			const maxIterations = Infinity // todo: why?
+			const maxIterations = 1
 			fetchNewDataUntilNoMoreAvailable(maxIterations)
 			.catch((err) => {
 				// Because it catches fetch errors by itself, if it does reject, we likely have a bug.
