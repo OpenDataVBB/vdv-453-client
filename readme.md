@@ -511,8 +511,8 @@ into the following JSON tree.
 - `onSubscriptionManualFetchFailed`: a function with the signature `async (service, {aboId, aboSubTag, aboSubChildren}) => {}`
 - `onDatenAbrufenAntwort`: a function with the signature `async (service, {datensatzAlle, weitereDaten, itLevel, bestaetigung}) => {}`
 - `onDataFetchStarted`: a function with the signature `async (service, {datensatzAlle}) => {}`
-- `onDataFetchSucceeded`: a function with the signature `async (service, {datensatzAlle}, {nrOfFetches, timePassed}) => {}`
-- `onDataFetchFailed`: a function with the signature `async (service, {datensatzAlle}, err, {nrOfFetches, timePassed}) => {}`
+- `onDataFetchSucceeded`: a function with the signature `async (service, {datensatzAlle}, {nrOfFetches, totalDataItems, timePassed}) => {}`
+- `onDataFetchFailed`: a function with the signature `async (service, {datensatzAlle}, err, {nrOfFetches, totalDataItems, timePassed}) => {}`
 - `onRefAusFetchStarted`: a function with the signature `async ({datensatzAlle}) => {}`
 - `onRefAusFetchSucceeded`: a function with the signature `async ({datensatzAlle}, {nrOfSollFahrts}) => {}`
 - `onRefAusFetchFailed`: a function with the signature `async ({datensatzAlle}, err, {nrOfSollFahrts}) => {}`

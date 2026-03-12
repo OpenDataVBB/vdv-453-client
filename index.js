@@ -220,8 +220,8 @@ const createClient = async (cfg, opt = {}) => {
 		onSubscriptionManualFetchFailed: (svc, {aboId, aboSubTag, aboSubChildren}) => {},
 		onDatenAbrufenAntwort: (svc, {datensatzAlle, weitereDaten, itLevel, bestaetigung}) => {},
 		onDataFetchStarted: (svc, {datensatzAlle}) => {},
-		onDataFetchSucceeded: (svc, {datensatzAlle}, {nrOfFetches, timePassed}) => {},
-		onDataFetchFailed: (svc, {datensatzAlle}, err, {nrOfFetches, timePassed}) => {},
+		onDataFetchSucceeded: (svc, {datensatzAlle}, {nrOfFetches, totalDataItems, timePassed}) => {},
+		onDataFetchFailed: (svc, {datensatzAlle}, err, {nrOfFetches, totalDataItems, timePassed}) => {},
 		onRefAusFetchStarted: ({datensatzAlle}) => {},
 		onRefAusFetchSucceeded: ({datensatzAlle}, {nrOfSollFahrts}) => {},
 		onRefAusFetchFailed: ({datensatzAlle}, err, {nrOfSollFahrts}) => {},
@@ -1030,14 +1030,15 @@ const createClient = async (cfg, opt = {}) => {
 		const maxBatches = datenAbrufenMaxBatches[service] ?? datenAbrufenMaxBatches.default
 		ok(Number.isInteger(maxBatches), `opt.datenAbrufenMaxBatches[${service}] or opt.datenAbrufenMaxBatches.default must be an integer`)
 
+		const itControl = {
+			maxBatches,
+			totalDataItems: 0,
+			continue: false,
+		}
 		let timePassed = null
 		let nrOfBatches = 0
 		try {
 			const t0 = performance.now()
-			const itControl = {
-				maxBatches,
-				continue: false,
-			}
 			while (true) {
 				if (nrOfBatches >= itControl.maxBatches) {
 					// todo: throw more specific error?
@@ -1059,6 +1060,7 @@ const createClient = async (cfg, opt = {}) => {
 			await onDataFetchFailed(service, opt, err, {
 				// todo [breaking]: rename to nrOfBatches
 				nrOfFetches: nrOfBatches,
+				totalDataItems: itControl.totalDataItems,
 				timePassed,
 			})
 			throw err
@@ -1066,6 +1068,7 @@ const createClient = async (cfg, opt = {}) => {
 		await onDataFetchSucceeded(service, opt, {
 			// todo [breaking]: rename to nrOfBatches
 			nrOfFetches: nrOfBatches,
+			totalDataItems: itControl.totalDataItems,
 			timePassed,
 		})
 	}
@@ -1095,7 +1098,10 @@ const createClient = async (cfg, opt = {}) => {
 			batch,
 			dataItems: 0,
 		}
-		logger.trace(logCtx, 'requesting data')
+		logger.trace({
+			...logCtx,
+			totalDataItems: itControl.totalDataItems,
+		}, 'requesting data')
 
 		const {
 			parseResponse,
@@ -1134,6 +1140,7 @@ const createClient = async (cfg, opt = {}) => {
 			if (abortController.signal.aborted) {
 				logger.debug({
 					...logCtx,
+					totalDataItems: itControl.totalDataItems,
 					reason: abortController.signal.reason,
 				}, 'fetching aborted')
 				return;
@@ -1157,6 +1164,7 @@ const createClient = async (cfg, opt = {}) => {
 			}
 			if (tag === dataSubTag) {
 				logCtx.dataItems++
+				itControl.totalDataItems++
 
 				// We cannot guarantee the order of elements in the loop over `tags`, so `WEITERE_DATEN` might come *before* `BESTAETIGUNG`. Because we want both, and because we assume that actual data elements come up after the two, we call the hook here.
 				if (!onDatenAbrufenAntwortCalled) {
@@ -1173,12 +1181,14 @@ const createClient = async (cfg, opt = {}) => {
 		if (weitereDaten) {
 			logger.debug({
 				...logCtx,
+				totalDataItems: itControl.totalDataItems,
 				bestaetigung: undefined,
 			}, `received DatenAbrufenAntwort with WeitereDaten=true, fetching another batch (${batch + 1})`)
 			itControl.continue = true
 		} else {
 			logger.trace({
 				...logCtx,
+				totalDataItems: itControl.totalDataItems,
 				bestaetigung: undefined,
 			}, `received DatenAbrufenAntwort without WeitereDaten=true`)
 		}
