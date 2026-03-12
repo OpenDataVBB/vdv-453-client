@@ -499,7 +499,7 @@ into the following JSON tree.
 
 - `onDatenBereitAnfrage`: a function with the signature `async (service, datenBereitAnfrage) => {}`
 - `onClientStatusAnfrage`: a function with the signature `async (service, clientStatusAnfrage) => {}`
-- `onStatusAntwort`: a function with the signature `async (service, statusAntwort) => {}`
+- `onStatusAntwort`: a function with the signature `async (service, statusAntwort, {timePassed}) => {}`
 - `onServerXSDVersionID`: a function with the signatur `async (service, xsdVersionID) => {}`
 - `onSubscriptionCreated`: a function with the signature `async (service, {aboId, expiresAt, aboSubTag, aboSubChildren}, bestaetigung, subStats) => {}`
 - `onSubscriptionRestored`: a function with the signature `async (svc, {aboId, expiresAt}) => {}`

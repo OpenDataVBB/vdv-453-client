@@ -208,7 +208,7 @@ const createClient = async (cfg, opt = {}) => {
 		// hooks for debugging/metrics/etc.
 		onDatenBereitAnfrage: (svc, datenBereitAnfrage) => {},
 		onClientStatusAnfrage: (svc, clientStatusAnfrage) => {},
-		onStatusAntwort: (svc, statusAntwort) => {},
+		onStatusAntwort: (svc, statusAntwort, {timePassed}) => {},
 		onServerXSDVersionID: (svc, xsdVersionID) => {},
 		onSubscriptionCreated: (svc, {aboId, expiresAt, aboSubTag, aboSubChildren}, bestaetigung, subStats) => {},
 		onSubscriptionRestored: (svc, {aboId, expiresAt}) => {},
@@ -326,6 +326,7 @@ const createClient = async (cfg, opt = {}) => {
 			service,
 		}
 
+		const t0 = performance.now()
 		const {
 			clientRequest: req,
 			serverResponse: res,
@@ -338,6 +339,7 @@ const createClient = async (cfg, opt = {}) => {
 			'StatusAnfrage',
 			[],
 		)
+		const timePassed = performance.now() - t0
 
 		const tags = parseResponse([
 			// todo: move "StatusAntwort" into constant?
@@ -355,9 +357,10 @@ const createClient = async (cfg, opt = {}) => {
 					datenBereit,
 					startDienstZst,
 					datenVersionID,
+					timePassed,
 				}, 'received StatusAntwort')
 
-				await onStatusAntwort(service, el)
+				await onStatusAntwort(service, el, {timePassed})
 
 				try {
 					await _checkServerStatusAntwort(service, el)
