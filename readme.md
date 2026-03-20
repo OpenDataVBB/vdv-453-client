@@ -279,6 +279,7 @@ Sends a VDV-453 `StatusAnfrage` to the server, to obtain information about the s
 	- `validFrom`: `Date.now()` – Start of the time frame to get plan data for. The plan data will include those `SollFahrt`s whose first departure is within the time frame.
 	- `mitBereitsAktivenFahrten`: `true` – Include those `SollFahrt`s that are already running at `validFrom`, i.e. their first departure is *before* `validFrom` but any later arrival/departure is *after*.
 	- `validUntil`: `validFrom + REF_AUS_DEFAULT_SUBSCRIPTION_TTL` – End of the time frame to get plan data for.
+	- `mitFormation`: `false` – Include `IstFormation` items describing the vehicle's composition (e.g. wagon types)?
 	- `fetchInterval`: `300_000` (in milliseconds)
 
 After subscribing successfully, it will return an object with the following fields:
@@ -309,6 +310,7 @@ Works like `client.dfiCheckServerStatus()`, except for `REF-AUS`.
 	- `expiresAt`: `Date.now() + AUS_DEFAULT_SUBSCRIPTION_TTL`
 	- `vorschauzeit`: `10` (in minutes)
 	- `hysterese`: `60` (in seconds)
+	- `mitFormation`: `false` – Include `IstFormation` items describing the vehicle's composition (e.g. wagon types)?
 	- `fetchInterval`: `30_000` (in milliseconds)
 
 After subscribing successfully, it will return an object with the following fields:

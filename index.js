@@ -1364,11 +1364,14 @@ const createClient = async (cfg, opt = {}) => {
 			expiresAt,
 			validFrom,
 			mitBereitsAktivenFahrten,
+			mitFormation,
 			fetchInterval,
 		} = {
 			expiresAt: now + REF_AUS_DEFAULT_SUBSCRIPTION_TTL,
 			validFrom: now, // todo: default beginning of the day?
 			mitBereitsAktivenFahrten: true,
+			// Note: Even though it `mitFormation` is part of VDV-454 v2.0, as of 2026-06-04, the VBB API fails with "VDV AboAnfrage was no valid XML" if it is included.
+			mitFormation: false,
 			// todo [breaking]: rename to `manualFetchInterval`
 			fetchInterval: 300_000, // 5m
 			...opt,
@@ -1401,7 +1404,9 @@ const createClient = async (cfg, opt = {}) => {
 			...(mitBereitsAktivenFahrten ? [
 				x('MitBereitsAktivenFahrten', {}, 'true'),
 			] : []),
-			// todo: MitFormation
+			...(mitFormation ? [
+				x('MitFormation', {}, 'true'),
+			] : []),
 		]
 		return await _subscribe(
 			REF_AUS,
@@ -1497,6 +1502,7 @@ const createClient = async (cfg, opt = {}) => {
 			// richtungsId,
 			vorschauzeit,
 			hysterese,
+			mitFormation,
 			fetchInterval,
 		} = {
 			expiresAt: Date.now() + AUS_DEFAULT_SUBSCRIPTION_TTL,
@@ -1516,11 +1522,14 @@ const createClient = async (cfg, opt = {}) => {
 			// > Die Hysterese des Lieferanten "VBB DDS" ist 60 Sekunden […].
 			// todo: does a lower value work too? nowadays many clients would be interested in delays <60s...
 			hysterese: 60, // seconds
+			// Note: Even though it `mitFormation` is part of VDV-454 v2.0, as of 2026-06-04, the VBB API fails with "VDV AboAnfrage was no valid XML" if it is included.
+			mitFormation: false,
 			// todo [breaking]: rename to `manualFetchInterval`
 			fetchInterval: 30_000, // 30s
 			...opt,
 		}
 		// todo: validate arguments
+		strictEqual(typeof mitFormation, 'boolean', 'opt.mitFormation must be a boolean')
 
 		const aboSubChildren = [
 			// todo: LinienFilter doesn't seem to work yet
@@ -1536,7 +1545,9 @@ const createClient = async (cfg, opt = {}) => {
 			// todo: UmlaufFilter
 			// todo: MitGesAnschluss
 			// todo: MitRealZeiten
-			// todo: MitFormation
+			...(mitFormation ? [
+				x('MitFormation', {}, 'true'),
+			] : []),
 			// todo: NurAktualisierung
 			// Note: <Vorschauzeit> has to be the last child element!
 			x('Vorschauzeit', {}, vorschauzeit),
