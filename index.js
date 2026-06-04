@@ -28,7 +28,7 @@ const {
 	// ANS,
 	// REF_ANS,
 	// > Dieser Dienst wird derzeit nicht von der VBB Datendrehscheibe unterstützt.
-	// VIS,
+	VIS,
 	// > Dieser Dienst wird derzeit nicht von der VBB Datendrehscheibe unterstützt.
 	// AND,
 	REF_AUS,
@@ -57,6 +57,7 @@ const {
 const ABO_ANFRAGE_ROOT_SUB_TAGS_BY_SERVICE = new Map([
 	[DFI, 'AboAZB'],
 	// [REF_DFI, 'AboAZBRef'],
+	[VIS, 'AboVIS'],
 	[REF_AUS, 'AboAUSRef'],
 	[AUS, 'AboAUS'],
 ])
@@ -95,6 +96,7 @@ const DAY = 24 * HOUR
 const SETTIMEOUT_MAX_DELAY = 2147483647
 
 const DFI_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
+const VIS_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
 const REF_AUS_DEFAULT_SUBSCRIPTION_TTL = 1 * DAY
 const AUS_DEFAULT_SUBSCRIPTION_TTL = 1 * HOUR
 
@@ -1260,7 +1262,7 @@ const createClient = async (cfg, opt = {}) => {
 	// _handleClientStatusAnfrage(REF_DFI)
 	// _handleClientStatusAnfrage(ANS)
 	// _handleClientStatusAnfrage(REF_ANS)
-	// _handleClientStatusAnfrage(VIS)
+	_handleClientStatusAnfrage(VIS)
 	// _handleClientStatusAnfrage(AND)
 	_handleClientStatusAnfrage(AUS)
 	_handleClientStatusAnfrage(REF_AUS)
@@ -1354,6 +1356,87 @@ const createClient = async (cfg, opt = {}) => {
 
 	const dfiCheckServerStatus = async () => {
 		return await _sendStatusAnfrage(DFI)
+	}
+
+	// ----------------------------------
+
+	const visSubscribe = async (visIds, opt = {}) => {
+		const {
+			expiresAt,
+			linienId,
+			richtungsId,
+			fetchInterval,
+		} = {
+			expiresAt: Date.now() + VIS_DEFAULT_SUBSCRIPTION_TTL,
+			linienId: null,
+			richtungsId: null,
+			fetchInterval: 15_000, // 15s
+			...opt,
+		}
+		// todo: validate arguments
+
+		ok(Array.isArray(visIds), 'visIds must be an array')
+		const aboSubChildren = [
+			...(visIds.map((visId) => x('VISID', {}, visId))),
+			x('LinienFilter', {}, [
+				linienId !== null ? x('LinienID', {}, linienId) : null,
+				richtungsId !== null ? x('RichtungsID', {}, richtungsId) : null,
+			]),
+			// todo: support `Zyklus`:
+			// > Zeitintervall in Sekunden, nach dessen Ablauf neue Daten geschickt werden sollen.
+		]
+		console.error({aboSubChildren}) // todo: remove
+		return await _subscribe(
+			VIS,
+			aboSubChildren,
+			expiresAt,
+			_fetchNewVisDataUntilNoMoreAvailable,
+			fetchInterval,
+		)
+	}
+	const visUnsubscribe = async (...aboIds) => {
+		return await _unsubscribe(VIS, aboIds)
+	}
+	const visUnsubscribeAll = async () => {
+		return await _unsubscribeAll(VIS)
+	}
+
+	const _fetchNewVisDataOnce = async (cfg) => {
+		const {
+			abortController,
+		} = cfg
+
+		const els = _fetchDataOnce(VIS, {
+			datensatzAlle,
+			abortController,
+		})
+		for await (const [visNachricht] of els) {
+			// todo: additionally emit parsed visNachricht.$children
+			data.emit(`raw:${VIS}:VISNachricht`, visNachricht)
+		}
+	}
+
+	// user-triggered manual fetch
+	const visFetchData = async (opt = {}) => {
+		const {
+			abortController,
+		} = {
+			abortController: new AbortController(),
+			...opt,
+		}
+		await _fetchNewVisDataOnce({
+			abortController,
+		})
+	}
+
+	// fetch triggered by the data provider, or by the subscription's manual fetch interval
+	const _fetchNewVisDataUntilNoMoreAvailable = async () => {
+		await _fetchNewDataUntilNoMoreAvailable(VIS, _fetchNewVisDataOnce)
+	}
+	_handleDatenBereitAnfrage(VIS, _fetchNewVisDataUntilNoMoreAvailable)
+
+	const visCheckServerStatus = async () => {
+		return await _sendStatusAnfrage(VIS)
 	}
 
 	// ----------------------------------
@@ -1663,6 +1746,11 @@ const createClient = async (cfg, opt = {}) => {
 		dfiUnsubscribeAll,
 		dfiFetchData,
 		dfiCheckServerStatus,
+		visSubscribe,
+		visUnsubscribe,
+		visUnsubscribeAll,
+		visFetchData,
+		visCheckServerStatus,
 		refAusSubscribe,
 		refAusUnsubscribe,
 		refAusUnsubscribeAll,
