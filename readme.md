@@ -141,6 +141,15 @@ data.on('dfi:AZBNachricht', (azbNachricht) => {
 	console.log(azbNachricht)
 })
 
+// subscribe to VDV-453 DFI service
+// the specific VIS IDs depend on your region's data
+const SOME_VIS_ID = 'my VIS ID'
+const {aboId: visAboId} = await visSubscribe(SOME_VIS_ID)
+unsubscribeTasks.push(() => visUnsubscribe(visAboId))
+data.on('raw:vis:VISNachricht', (visNachricht) => {
+	console.log(visNachricht)
+})
+
 // subscribe to VDV-454 REF-AUS service
 const {aboId: refAusAboId} = await refAusSubscribe({
 	expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes from now
@@ -210,6 +219,11 @@ Arguments:
 Arguments:
 1. `azbNachricht` – The whole `DFI` `AZBNachricht`, usually containing many `AZBFahrplanlage`s, `AZBFahrtLoeschen`s, etc.
 
+#### event `raw:vis:VISNachricht`
+
+Arguments:
+1. `visNachricht` – The whole `VIS` `VISNachricht`, usually containing many `VISFahrplanlage`s, `VISFahrtLoeschen`s, etc.
+
 #### event `raw:ausref:Linienfahrplan`
 
 Arguments:
@@ -268,6 +282,48 @@ Sends a VDV-453 `StatusAnfrage` to the server, to obtain information about the s
 
 - `datenBereit` (boolean): If the server has new `DFI` data to be fetched by the client.
 - `startDienstZst` (ISO 8601 string or `null`): When the server's `DFI` service has been started.
+- `statusAntwort` (object): The whole response's `StatusAntwort` element.
+
+### `client.visSubscribe()`
+
+`visSubscribe(visIds, opt = {})` is an async function that takes the following arguments:
+
+1. `visIds`: An array of "VIS IDs".
+2. `opt` (optional): An object whose fields override the following defaults:
+	- `expiresAt`: `Date.now() + VIS_DEFAULT_SUBSCRIPTION_TTL`,
+	- `linienId`: `null`,
+	- `richtungsId`: `null`,
+	- `fetchInterval`: `15_000` (in milliseconds)
+
+After subscribing successfully, it will return an object with the following fields:
+
+- `aboId`: The ID that represents the subscription. It can be used to unsubscribe.
+
+### `client.visFetchData()`
+
+`visFetchData(opt = {})` is an async function that takes the following arguments:
+
+1. `opt` (optional): An object whose fields override the following defaults:
+	- `abortController`: *inactive `AbortController`* – Pass in your own to be able to [`.abort()`](https://nodejs.org/docs/latest-v20.x/api/globals.html#abortcontrollerabortreason) the fetching.
+
+### `client.visUnsubscribe()`
+
+`visUnsubscribe(...aboIds)` is an async function that takes the following arguments:
+
+1. `aboIds`: >0 subscription IDs.
+
+### `client.visUnsubscribeAll()`
+
+`visUnsubscribeAll()` is an async function that 0 arguments. It unsubscribes from all active `VIS` subscriptions the server knows about.
+
+### `client.visCheckServerStatus()`
+
+Sends a VDV-453 `StatusAnfrage` to the server, to obtain information about the server's state related to the `VIS` service.
+
+`visCheckServerStatus()` is an async function that returns an object with the following fields:
+
+- `datenBereit` (boolean): If the server has new `VIS` data to be fetched by the client.
+- `startDienstZst` (ISO 8601 string or `null`): When the server's `VIS` service has been started.
 - `statusAntwort` (object): The whole response's `StatusAntwort` element.
 
 ### `client.refAusSubscribe()`
