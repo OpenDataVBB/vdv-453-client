@@ -1,7 +1,7 @@
 {
 	"name": "vdv-453-client",
 	"description": "Subscribe to realtime public transport data from a VDV-453/VDV-454 API.",
-	"version": "3.0.3",
+	"version": "3.1.0",
 	"type": "module",
 	"main": "index.js",
 	"files": [
@@ -39,10 +39,10 @@
 		"xastscript": "^4.0.0"
 	},
 	"devDependencies": {
-		"@eslint/js": "^9.39.1",
-		"eslint": "^9.39.1",
+		"@eslint/js": "^10.0.1",
+		"eslint": "^10.15.0",
 		"get-port": "^7.0.0",
-		"globals": "^16.5.0",
+		"globals": "^17.14.0",
 		"pino-pretty": "^13.1.2",
 		"tap-min": "^3.0.0",
 		"tape": "^5.0.1"
